@@ -1,17 +1,14 @@
 from typing import Union
+from rich.console import Console as RichConsole
 import contextvars
 
-try:
-    from rich.console import Console as RichConsole
-    console_instance = RichConsole()
 
-except ImportError as e:
-    console_instance = None
+console = contextvars.ContextVar("console", default=None)
 
-
-console = contextvars.ContextVar("console", default=console_instance)
-
-def get_current_console():
+def get_current_console() -> RichConsole:
+    c = console.get()
+    if not c:
+        console.set(RichConsole())
     return console.get() 
 
 

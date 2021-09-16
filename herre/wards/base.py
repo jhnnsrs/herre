@@ -94,7 +94,7 @@ class BaseWard(metaclass=WardMeta):
         """Negotiation is a step before launching the first query to your backend service,
         it allows for initial configurations to be transfer
         """
-        pass
+        return None
 
 
     async def _run_async(self, query: BaseQuery, variables: dict):

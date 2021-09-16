@@ -48,8 +48,13 @@ class HerreClient:
         Raises:
             HerreError: [description]
         """
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError as e:
+            logger.info("There is no event-loop in this thread. Lets create a new One")
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
 
-        loop = asyncio.get_event_loop()
         if not force_async and loop.is_running() and in_notebook() :
             # Jupyter handles the eventloop a bit erradically put has top_level await, so we
             # can either have sync or non_sync code, as long as await is not a standard
@@ -66,7 +71,7 @@ class HerreClient:
             self.loop = loop
             self.sync_mode = False
 
-
+        self.config_path = config_path
         self.config = HerreConfig.from_file(config_path, **overrides)
 
         if self.config.authorization_grant_type == GrantType.CLIENT_CREDENTIALS:
