@@ -3,12 +3,17 @@ from typing import Any, List, Optional
 from pydantic.class_validators import validator
 from pydantic.fields import Field
 from pydantic.main import BaseModel
+from pydantic.error_wrappers import ValidationError
 from herre.wards.graphql import ParsedQuery, GraphQLWard
 from herre.wards.query import get_schema_registry
 from herre.access.model.base import AsyncModelManager, SyncModelManager, Model, ModelType
 import logging
 
 logger = logging.getLogger(__name__)
+
+class GraphQLExpansionError(Exception):
+    pass
+
 
 class GraphQLSyncModelManager(SyncModelManager):
 
@@ -70,7 +75,11 @@ class GraphQLModel(Model, QueryVariable):
 
     def __init__(__pydantic_self__, **data: Any) -> None:
         if "__typename" not in data: data["__typename"] = __pydantic_self__.__class__.__name__ 
-        super().__init__(**data)
+        try:
+            super().__init__(**data)
+        except ValidationError as e:
+            raise GraphQLExpansionError(f"Couldn't expand {data} ") from e
+            
 
 
     @validator('typename')
