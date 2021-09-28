@@ -1,26 +1,30 @@
+from herre.config.logging import LoggingConfig
 import logging
 from rich.logging import RichHandler
 
 
-def setLogging(log_level, log_stream=False):
-    LOGFORMAT = "  s%(levelname)-8s%(reset)s | %(message)s%(reset)s"
-    file = logging.FileHandler("logs.txt")
-    logging.root.setLevel(log_level)
-    file.setLevel(log_level)
+def setLogging(config_path=None,**kwargs):
 
+    if config_path:
+        config = LoggingConfig.from_file(config_path, overrides=kwargs)
+    else:
+        config = LoggingConfig(**kwargs)    
 
-    
     logger = logging.getLogger()
-    logger.setLevel(log_level)
+    logger.setLevel(config.level)
 
-    if log_stream:
+    if config.stream:
         stream = RichHandler(markup=True)
-        logging.root.setLevel(log_level)
-        stream.setLevel(log_level)
+        logging.root.setLevel(config.level)
+        stream.setLevel(config.level)
 
         logger.addHandler(stream)
 
-    logger.addHandler(file)
+    if config.file:
+        file = logging.FileHandler("logs.txt")
+        logging.root.setLevel(config.level)
+        file.setLevel(config.level)
+
+        logger.addHandler(file)
 
 
-setLogging("INFO", log_stream=True)

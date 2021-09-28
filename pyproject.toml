@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "herre"
-version = "0.1.5"
+version = "0.1.13"
 readme = "README.md"
 description = "The governing package for modules of the arnheim framework, it provides core features like wards, the event loop and authentication with an oauth provider"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]

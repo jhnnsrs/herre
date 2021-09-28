@@ -1,4 +1,6 @@
+from typing import Any, Dict
 from pydantic.main import BaseModel
+from pydantic import BaseSettings, env_settings
 import yaml
 import os
 
@@ -6,12 +8,29 @@ import os
 class ConfigError(Exception):
     pass
 
-class BaseConfig(BaseModel):
+
+def yaml_config_settings_source(settings: BaseSettings) -> Dict[str, Any]:
+    """
+    A simple settings source that loads variables from a YAML file
+    at the project's root.
+
+    """
+    file_path = settings.__config__.yaml_file
+    group = settings.__config__.yaml_group
+    with open(file_path,"r") as file:
+        config = yaml.load(file, Loader=yaml.FullLoader)
+
+    for subgroup in group.split("."):
+        config = config[subgroup]
+
+    return config
+
+
+
+
+class BaseConfig(BaseSettings):
     """Container for the Configuration options
     parsed either from Env or from the yaml file
-
-    Abstract:
-        __group (str): Needs to implement for the Parsing
 
     Args:
         BaseModel ([type]): [description]
@@ -19,22 +38,29 @@ class BaseConfig(BaseModel):
     Returns:
         [type]: [description]
     """
-    _group: str = None
+
+    class Config:
+        extra = "ignore"
+
+        @classmethod
+        def customise_sources(
+            cls,
+            init_settings,
+            env_settings,
+            file_secret_settings,
+        ):
+            return (
+                init_settings,
+                env_settings,
+                yaml_config_settings_source,
+                file_secret_settings,
+            )
+
 
 
     @classmethod
-    def from_file(cls, file_path, **overrides):
-        assert cls._group is not None, "Please specifiy your parent group in your Config Class to access it from a file "
-        assert os.path.isfile(file_path), f"File {file_path} does not exist"
+    def from_file(cls, file_path=None, **overrides):
+        assert hasattr(cls.__config__,"yaml_group"), "Please specifiy your parent group in your Config Class to access it from a file "
+        cls.__config__.yaml_file = file_path
+        return cls(**overrides)
         
-        with open(file_path,"r") as file:
-            config = yaml.load(file, Loader=yaml.FullLoader)
-
-            try:
-                for subgroup in cls._group.split("."):
-                    config = config[subgroup]
-
-                config.update(**overrides)
-                return cls(**config)
-            except KeyError as e:
-                raise ConfigError(f"Couldn't load {cls._group} Group from {file_path}: Subgroup {subgroup} does not exist in {config}") from e

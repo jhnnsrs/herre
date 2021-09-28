@@ -1,4 +1,4 @@
-from herre.graphical import GraphicalBackend, has_webview
+from herre.graphical import GraphicalBackend, has_webview_error
 from herre.console.context import console, get_current_console
 from herre.grants.base import BaseGrant
 from oauthlib.oauth2 import WebApplicationClient
@@ -23,7 +23,7 @@ class AuthorizationCodeGrant(BaseGrant):
         )
 
         with GraphicalBackend():
-            assert has_webview, "Please install 'PyQtWebEngine' if you want to use the Implicit Flow"
+            assert not has_webview_error, "Please install 'PyQtWebEngine' if you want to use the Implicit Flow"
             from herre.grants.code.widgets.login import LoginDialog
             self.token, accepted = LoginDialog.getToken(backend=self)
 

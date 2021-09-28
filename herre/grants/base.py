@@ -2,13 +2,18 @@
 
 
 from abc import abstractmethod
+from herre.grants.models import User
+
+from pydantic.main import prepare_config
 from herre.console.context import get_current_console
-from herre.config.model import HerreConfig
+from herre.config.herre import HerreConfig
 from abc import ABC
 import os 
 import asyncio
 import requests
 import logging
+import aiohttp
+
 
 logger = logging.getLogger(__name__)
 
@@ -24,11 +29,14 @@ class BaseGrant(ABC):
         self.base_url = f'{"https" if self.config.secure else "http"}://{self.config.host}:{self.config.port}/'
         self.auth_url = self.base_url + authorize_url
         self.token_url = self.base_url + token_url
+        self.userinfo_url = self.base_url + "userinfo/"
         self.refresh_url = self.token_url
+        self._userinfo = None
        
         self.scopes = self.config.scopes + ["introspection"]
         self.scope = " ".join(self.scopes)
         self.token = None
+        self._user = None
         # State changed through Class
         self.can_refresh = self.refreshable
 
@@ -37,9 +45,10 @@ class BaseGrant(ABC):
     def fetchToken(self):
         raise NotImplementedError()
 
-    @abstractmethod
-    def refreshToken(self):
-        raise NotImplementedError()
+    @property
+    def user(self) -> User:
+        return self._user
+
 
     @property
     def logged_in(self):
@@ -51,25 +60,27 @@ class BaseGrant(ABC):
         return self.token["access_token"]
 
 
-    async def login(self, **kwargs):
+    def login(self, **kwargs):
+        """IS SYNC!!!!
+        """
         with get_current_console().status("[bold green] Authenticating"):
-            from concurrent.futures import ThreadPoolExecutor
             self.fetchToken()
             assert "access_token" in self.token, "Returned token does not have an access_token"
             if "refresh_token" in self.token:
                 self.can_refresh = True
 
-
-    def refreshToken(self):
-        assert "refresh_token" in self.token, "Token had not refresh-token attached"
-        self.token = requests.post(self.refresh_url, {"grant_type": "refresh_token", "refresh_token": self.token["refresh_token"], "client_id": self.config.client_id, "client_secret": self.config.client_secret}).json()
+        try:
+            self._user = User(**requests.get(self.userinfo_url, headers={"Authorization": f"Bearer {self.access_token}"}).json())
+        except:
+            self._user = None
 
 
     async def refresh(self, **kwargs):
-        with get_current_console().status("[bold green] Refreshing Token"):
-            from concurrent.futures import ThreadPoolExecutor
-            self.refreshToken()
-            assert "access_token" in self.token, "Returned token does not have an access_token"
-            if "refresh_token" in self.token:
-                self.can_refresh = True
+        assert "refresh_token" in self.token, "Token had not refresh-token attached"
+        async with aiohttp.ClientSession() as session:
+            async with session.post(self.refresh_url, data={"grant_type": "refresh_token", "refresh_token": self.token["refresh_token"], "client_id": self.config.client_id, "client_secret": self.config.client_secret}) as resp:
+                self.token =  await resp.json()
+                assert "access_token" in self.token, "Returned refreshed token does not have an access_token"
+                if "refresh_token" in self.token:
+                    self.can_refresh = True
 

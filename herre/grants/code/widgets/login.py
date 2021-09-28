@@ -1,10 +1,16 @@
 
 from qtpy import QtCore
 from qtpy.QtWidgets import QDialog, QVBoxLayout
-from qtpy.QtWebEngineWidgets import QWebEngineView
+from qtpy.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 import logging
+import os
 
 logger = logging.getLogger(__name__)
+
+class WebEnginePage(QWebEnginePage):
+
+    def javaScriptConsoleMessage(self, level, msg, line, sourceID):
+        pass
 
 class LoginWindow(QWebEngineView):
     """ A Login window for the OSF """
@@ -19,7 +25,7 @@ class LoginWindow(QWebEngineView):
 
         self.urlChanged.connect(self.check_URL)
         self.callback = tokenCallback
-
+        self.setPage(WebEnginePage(self))
         self.load(QtCore.QUrl(auth_url))
         self.set_state(state)
 
@@ -28,13 +34,13 @@ class LoginWindow(QWebEngineView):
         self.state = state
 
     def check_URL(self, url: QtCore.QUrl):
-            url = url.url()
-            if url.startswith(self.backend.config.redirect_uri):
-                try:
-                    token = self.session.fetch_token(self.backend.token_url, client_secret=self.backend.config.client_secret, authorization_response=url)
-                    if token: self.callback(token)
-                except Exception as e:
-                    logger.exception(e)
+        url = url.url()
+        if url.startswith(self.backend.config.redirect_uri):
+            try:
+                token = self.session.fetch_token(self.backend.token_url, client_secret=self.backend.config.client_secret, authorization_response=url)
+                if token: self.callback(token)
+            except Exception as e:
+                logger.exception(e)
 
 
 
@@ -54,6 +60,7 @@ class LoginDialog(QDialog):
 
     def tokenReady(self, token):
         self.token = token
+        self.webview.close() # NEEDS TO BE CALLED GOD DAMN IT
         self.accept()
 
     # static method to create the dialog and return (date, time, accepted)

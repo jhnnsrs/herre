@@ -1,7 +1,12 @@
-from herre.auth import get_current_herre
-import asyncio
 
-def loopify(potential_future):
+import asyncio
+import threading
+
+
+
+
+
+def loopify(potential_future, as_task=False):
     """Taks an Async Function and according
     to the current loop setting either returns over
     it synchronusly in the herre loop or returns
@@ -13,13 +18,19 @@ def loopify(potential_future):
     Returns:
         [type]: [description]
     """
+    from herre.auth import get_current_herre
 
     loop = get_current_herre().loop
-    sync_mode =  get_current_herre().sync_mode
+
+    if as_task:
+        return loop.create_task(potential_future)
+
     if loop.is_running():
-        if not sync_mode: return potential_future
+        print("Here")
+        if loop._thread_id == threading.current_thread().ident: return potential_future
         return asyncio.run_coroutine_threadsafe(potential_future, loop).result()
     
+
     return loop.run_until_complete(potential_future)
 
 
@@ -67,10 +78,11 @@ def loopify_gen(potential_generator):
     Returns:
         [type]: [description]
     """
+    from herre.auth import get_current_herre
+
     loop = get_current_herre().loop
-    sync_mode =  get_current_herre().sync_mode
     if loop.is_running():
-        if not sync_mode: return potential_generator
+        if loop._thread_id == threading.current_thread().ident: return potential_generator
         return next_on_gen(potential_generator, loop)
 
 

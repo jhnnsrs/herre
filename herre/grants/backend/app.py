@@ -15,10 +15,5 @@ class BackendGrant(BaseGrant):
             client_secret=self.config.client_secret, verify=True)
 
 
-    def refreshToken(self):
-
-
-
-        return None
 
 
