@@ -1,8 +1,13 @@
 from abc import abstractmethod
-from herre.loop import loopify
+from herre.herre import Herre
 from herre.wards.variables import parse_variables
-from herre.auth import HerreClient
+from herre import get_current_herre
 import asyncio
+from koil import Koil, get_current_koil
+from konfik import Konfik, get_current_konfik
+from koil.loop import koil
+import konfik
+from konfik.config.base import Config
 
 class WardException(Exception):
     pass
@@ -11,9 +16,6 @@ class WardMeta(type):
     """
     
     """
-
-
-
     def __init__(self, name, bases, attrs):
         super(WardMeta, self).__init__(name, bases, attrs)
         if attrs["__qualname__"] != "BaseWard":
@@ -70,23 +72,28 @@ class BaseWard(metaclass=WardMeta):
         [type]: [description]
     """
     id: str
+    configClass = Config
 
-    def __init__(self, herre: HerreClient) -> None:
-        self.herre = herre
+    def __init__(self, *args,  herre: Herre = None, koil: Koil = None, konfik: Konfik = None, max_retries = 4, **kwargs) -> None:
+        self.herre = herre or get_current_herre()
+        self.koil = koil or get_current_koil()
+        self.konfik = konfik or get_current_konfik()
         self.connected = False
         self.transcript = None
+        self.config = None
+        self.max_retries = max_retries
         super().__init__()
 
     @abstractmethod
-    async def run(self, query: BaseQuery, variables: dict):
+    async def handle_run(self, query: BaseQuery, parsed_variables: dict):
         raise NotImplementedError("Your Ward must overwrite run")
 
     @abstractmethod
-    async def connect(self):
+    async def handle_connect(self):
         raise NotImplementedError("Your Ward must overwrite run")
 
     @abstractmethod
-    async def disconnect(self):
+    async def handle_disconnect(self):
         raise NotImplementedError("Your Ward must overwrite run")
 
 
@@ -97,27 +104,36 @@ class BaseWard(metaclass=WardMeta):
         return None
 
 
-    async def _run_async(self, query: BaseQuery, variables: dict):
+    async def arun(self, query: BaseQuery, variables: dict = {}):
         assert isinstance(query, BaseQuery), "Query must be of type BaseQuery"
         if not self.connected:
-            await self._connect()
-        return await self.run(query, await parse_variables(variables))
+            await self.aconnect()
+
+        return await self.handle_run(query, await parse_variables(variables))
 
 
-    def _run_sync(self, query: BaseQuery, variables: dict):
-        return loopify(self._run_async(query, variables))
+    def run(self, query: BaseQuery, variables: dict = {}):
+        return koil(self.arun(query, variables))
 
 
-
-    async def _disconnect(self):        
-        await self.disconnect()
+    async def adisconnect(self):  
+        print("Doind this here")      
+        await self.handle_disconnect()
         self.transcript = None
         self.connected = False
 
-    async def _connect(self):        
-        await self.connect()
-        self.transcript = await self.negotiate()
+    async def aconnect(self): 
+        if not self.herre.logged_in:
+            await self.herre.login()
+
+        if not self.konfik.loaded:
+            await self.konfik.aload()
+
+        self.config = self.configClass.from_konfik(konfik=self.konfik)
+        await self.handle_connect()
         self.connected = True
+        self.transcript = await self.negotiate()
+        
         
 
 

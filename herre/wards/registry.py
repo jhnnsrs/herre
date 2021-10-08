@@ -1,6 +1,6 @@
 import asyncio
 from typing import Dict, Type
-from herre.auth import get_current_herre
+from herre import get_current_herre
 from herre.wards.base import BaseWard
 
 
@@ -27,7 +27,7 @@ class WardRegistry:
 
     def get_ward_instance(self, key) -> BaseWard:
         if key in self.keyInstanceMap: return self.keyInstanceMap[key]
-        self.keyInstanceMap[key] = self.keyWardClassMap[key](get_current_herre())
+        self.keyInstanceMap[key] = self.keyWardClassMap[key]()
         return self.keyInstanceMap[key]
 
 
@@ -41,9 +41,6 @@ class WardRegistry:
         connected_wards = [ward for key, ward in self.keyInstanceMap.items() if ward.connected]
         await asyncio.gather(*[ward._disconnect() for ward in connected_wards])
 
-
-
-    
 
 
 

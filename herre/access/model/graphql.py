@@ -18,7 +18,7 @@ class GraphQLExpansionError(Exception):
 class GraphQLSyncModelManager(SyncModelManager):
 
     def from_query(self, query, **kwargs):
-        res_dict =  self.ward._run_sync(query, variables=kwargs)
+        res_dict =  self.ward.run(query, variables=kwargs)
         return self.modelClass(**res_dict[query.firstchild])
 
 
@@ -34,7 +34,7 @@ class GraphQLAsyncModelManager(AsyncModelManager):
 
 
     async def from_query(self, query, **kwargs):
-        res_dict =  await self.ward._run_async(query, variables=kwargs)
+        res_dict =  await self.ward.arun(query, variables=kwargs)
         return self.modelClass(**res_dict[query.firstchild])
     
     async def get(self, **kwargs) -> ModelType:

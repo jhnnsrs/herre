@@ -1,5 +1,5 @@
 import abc
-from herre.loop import loopify
+from koil.loop import koil
 from typing import Any, Dict, List
 
 from pydantic.main import BaseModel
@@ -141,7 +141,7 @@ class TypedQuery:
         self.collapse = collapse
 
 
-    async def _run(self, **variables):
+    async def arun(self, **variables):
         result = await self.ward._run_async(self.query, variables=variables)
         expanded = await get_schema_registry().expand_from_schema(self.ward_key, self.query, result, collapse=self.collapse)
         return expanded
@@ -150,7 +150,7 @@ class TypedQuery:
         return self.run(**kwds)
 
     def run(self, **variables):
-        return loopify(self._run(**variables))
+        return koil(self.arun(**variables))
 
     def _repr_html_(self):
         return f'<td> <th>Query for Elements {self.ward_key}</th>  <tr> {self.query.firstchild} </tr></td>'

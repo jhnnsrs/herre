@@ -1,11 +1,12 @@
-
-
+from abc import abstractproperty
 from herre.exceptions import TokenExpired
-from herre.auth import HerreClient
 from herre.wards.base import BaseQuery, BaseWard, WardException
 import aiohttp
 import logging
 import re
+
+from herre.wards.variables import parse_variables
+from konfik.config.base import Config
 
 logger = logging.getLogger(__name__)
 
@@ -73,38 +74,43 @@ class GraphQLProtocolException(WardException):
     pass
 
 
+class GraphQLWardConfig(Config):
+
+    @abstractproperty
+    def endpoint(self):
+        return NotImplementedError("Please overwrite endpoint")
+
+
 class GraphQLWard(BaseWard):
+    configClass  =  GraphQLWardConfig
+    config: GraphQLWardConfig
 
     class Meta:
         abstract = True
 
 
-    def __init__(self, herre: HerreClient, endpoint: str) -> None:
-        super().__init__(herre)
-        self.endpoint = endpoint
+    async def handle_connect(self):
 
-
-    async def connect(self):
-        if not self.herre.logged_in:
-            await self.herre.login()
-
-            
         self.async_session = aiohttp.ClientSession(headers=self.herre.headers)
 
-    async def disconnect(self):
+    async def handle_disconnect(self):
         await self.async_session.close()
+        self.connected = False
 
     
-    async def run(self, gql: ParsedQuery, variables: dict = {}):
+    async def handle_run(self, gql: ParsedQuery, variables: dict = {}, retry=0):
+
         try:
-            async with self.async_session.post(self.endpoint, json={"query": gql.query, "variables": variables}) as resp:
+            assert retry < self.max_retries, f"Retries Exceeded for Request {gql} with {variables}"
+            print(self.config.endpoint)
+            async with self.async_session.post(self.config.endpoint, json={"query": gql.query, "variables": variables}) as resp:
                 
                 if resp.status == 200:
                     result = await resp.json() 
                     logger.debug(f"Received Reply {result}")
 
                     if "errors" in result:
-                        raise GraphQLQueryException(f"Ward {self.endpoint}:" + str(result["errors"]))
+                        raise GraphQLQueryException(f"Ward {self.config.endpoint}:" + str(result["errors"]))
 
                     return result["data"]
                 
@@ -117,6 +123,9 @@ class GraphQLWard(BaseWard):
 
                 raise GraphQLProtocolException(f"Unexpected statuscode {resp.status} {resp}")
 
+        except TokenExpired as e:
+            await self.herre.arefresh()
+            return await self.run(gql, variables, retry=retry+1)
 
         except aiohttp.client_exceptions.ClientOSError as e :
             await self.disconnect()

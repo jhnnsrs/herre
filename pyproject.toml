@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "herre"
-version = "0.1.13"
+version = "0.1.24"
 readme = "README.md"
 description = "The governing package for modules of the arnheim framework, it provides core features like wards, the event loop and authentication with an oauth provider"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
@@ -8,7 +8,7 @@ license = "CC BY-NC 3.0"
 packages = [{include = "herre"}]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.6"
 pydantic = "^1.8.2"
 PyYAML = "^5.4.1"
 QtPy = "^1.11.1"

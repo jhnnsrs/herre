@@ -1,16 +1,18 @@
-from herre.config.base import BaseConfig
-from pydantic import Field
 from enum import Enum
 from typing import List, Optional
+from konfik import Config
+
+
 
 
 class GrantType(str, Enum):
     IMPLICIT = "IMPLICIT"
     PASSWORD = "PASSWORD"
     CLIENT_CREDENTIALS = "CLIENT_CREDENTIALS"
-    AUHORIZATION_CODE = "AUTHORIZATION_CODE"
+    AUTHORIZATION_CODE = "AUTHORIZATION_CODE"
+    AUTHORIZATION_CODE_SERVER = "AUTHORIZATION_CODE_SERVER"
 
-class HerreConfig(BaseConfig):
+class HerreConfig(Config):
 
     secure: bool 
     host: str
@@ -21,13 +23,9 @@ class HerreConfig(BaseConfig):
     scopes: List[str]
     redirect_uri: Optional[str]
     jupyter_sync: bool = False
+    username: Optional[str]
+    password: Optional[str]
+    timeout: int = 10
 
     class Config:
-        yaml_group = "herre"
-        env_prefix = "herre_"
-
-
-    def __str__(self) -> str:
-        return f"{'Secure' if self.secure else 'Insecure'} Connection to {self.host}:{self.port} on Grant {self.authorization_grant_type}"
-
-    
+        group = "herre"
