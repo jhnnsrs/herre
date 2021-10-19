@@ -18,6 +18,17 @@ yarl = ">=1.0,<2.0"
 speedups = ["aiodns", "brotlipy", "cchardet"]
 
 [[package]]
+name = "aiohttp-cors"
+version = "0.7.0"
+description = "CORS support for aiohttp"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+aiohttp = ">=1.1"
+
+[[package]]
 name = "appnope"
 version = "0.1.2"
 description = "Disable App Nap on macOS >= 10.9"
@@ -200,6 +211,21 @@ description = "Discover and load entry points from installed packages."
 category = "main"
 optional = true
 python-versions = ">=2.7"
+
+[[package]]
+name = "fakts"
+version = "0.1.5"
+description = "easy configuration discovery based on UDP broadcasts and konfig beacons (servers that redirect configs back to the client)"
+category = "main"
+optional = false
+python-versions = ">=3.8,<4.0"
+
+[package.dependencies]
+aiohttp_cors = ">=0.7.0,<0.8.0"
+koil = ">=0.1.29,<0.2.0"
+pydantic = ">=1.8.2,<2.0.0"
+PyYAML = ">=5.4.1,<6.0.0"
+QtPy = ">=1.11.2,<2.0.0"
 
 [[package]]
 name = "filelock"
@@ -437,6 +463,21 @@ description = "A JupyterLab extension."
 category = "main"
 optional = true
 python-versions = ">=3.6"
+
+[[package]]
+name = "koil"
+version = "0.1.29"
+description = "An abstract event loop to run in an async and sync context (especially jupyter and qt), with utility functions to allow both accesses"
+category = "main"
+optional = false
+python-versions = ">=3.6.1,<4.0.0"
+
+[package.dependencies]
+pydantic = ">=1.8.2,<2.0.0"
+qtpy = ">1"
+
+[package.extras]
+jupyter = ["jupyter (>=1.0.0,<2.0.0)"]
 
 [[package]]
 name = "markupsafe"
@@ -902,7 +943,7 @@ test = ["flaky", "pytest", "pytest-qt"]
 
 [[package]]
 name = "qtpy"
-version = "1.11.1"
+version = "1.11.2"
 description = "Provides an abstraction layer on top of the various Qt bindings (PyQt5, PyQt4 and PySide) and additional custom QWidgets."
 category = "main"
 optional = false
@@ -1140,7 +1181,7 @@ pyqt = ["PyQt5", "PyQtWebEngine"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "796ce2a804ab3336470cbc5504a6aef462df0ecb5bc2c4fadf5a87bea8b24658"
+content-hash = "7bc45de488e658cbef486a40e5d4d081e1d93573f736c8a193ec9de5d95c6c4e"
 
 [metadata.files]
 aiohttp = [
@@ -1181,6 +1222,10 @@ aiohttp = [
     {file = "aiohttp-3.7.4.post0-cp39-cp39-win32.whl", hash = "sha256:932bb1ea39a54e9ea27fc9232163059a0b8855256f4052e776357ad9add6f1c9"},
     {file = "aiohttp-3.7.4.post0-cp39-cp39-win_amd64.whl", hash = "sha256:02f46fc0e3c5ac58b80d4d56eb0a7c7d97fcef69ace9326289fb9f1955e65cfe"},
     {file = "aiohttp-3.7.4.post0.tar.gz", hash = "sha256:493d3299ebe5f5a7c66b9819eacdcfbbaaf1a8e84911ddffcdc48888497afecf"},
+]
+aiohttp-cors = [
+    {file = "aiohttp-cors-0.7.0.tar.gz", hash = "sha256:4d39c6d7100fd9764ed1caf8cebf0eb01bf5e3f24e2e073fda6234bc48b19f5d"},
+    {file = "aiohttp_cors-0.7.0-py3-none-any.whl", hash = "sha256:0451ba59fdf6909d0e2cd21e4c0a43752bc0703d33fc78ae94d9d9321710193e"},
 ]
 appnope = [
     {file = "appnope-0.1.2-py2.py3-none-any.whl", hash = "sha256:93aa393e9d6c54c5cd570ccadd8edad61ea0c4b9ea7a01409020c9aa019eb442"},
@@ -1326,6 +1371,10 @@ entrypoints = [
     {file = "entrypoints-0.3-py2.py3-none-any.whl", hash = "sha256:589f874b313739ad35be6e0cd7efde2a4e9b6fea91edcc34e58ecbb8dbe56d19"},
     {file = "entrypoints-0.3.tar.gz", hash = "sha256:c70dd71abe5a8c85e55e12c19bd91ccfeec11a6e99044204511f9ed547d48451"},
 ]
+fakts = [
+    {file = "fakts-0.1.5-py3-none-any.whl", hash = "sha256:03815ebb3fced7444c77be575e95091dc127a9f3708a35a7a455e665ae134f8f"},
+    {file = "fakts-0.1.5.tar.gz", hash = "sha256:59c206851a5db2e3d10f2b83220c3ca623294bdde01efcbf95c60bdaa29956e1"},
+]
 filelock = [
     {file = "filelock-3.0.12-py3-none-any.whl", hash = "sha256:929b7d63ec5b7d6b71b0fa5ac14e030b3f70b75747cef1b10da9b879fef15836"},
     {file = "filelock-3.0.12.tar.gz", hash = "sha256:18d82244ee114f543149c66a6e0c14e9c4f8a1044b5cdaadd0f82159d6a6ff59"},
@@ -1390,6 +1439,10 @@ jupyterlab-pygments = [
 jupyterlab-widgets = [
     {file = "jupyterlab_widgets-1.0.2-py3-none-any.whl", hash = "sha256:f5d9efface8ec62941173ba1cffb2edd0ecddc801c11ae2931e30b50492eb8f7"},
     {file = "jupyterlab_widgets-1.0.2.tar.gz", hash = "sha256:7885092b2b96bf189c3a705cc3c412a4472ec5e8382d0b47219a66cccae73cfa"},
+]
+koil = [
+    {file = "koil-0.1.29-py3-none-any.whl", hash = "sha256:1dfc8e26521851ba94dd2415a522223a1716580359e855eecd75483f74fc46de"},
+    {file = "koil-0.1.29.tar.gz", hash = "sha256:b9d06c73ccab4ddd5c01790f58145e1b9f8006570165b6d1136eea1308d36efe"},
 ]
 markupsafe = [
     {file = "MarkupSafe-2.0.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:f9081981fe268bd86831e5c75f7de206ef275defcb82bc70740ae6dc507aee51"},
@@ -1740,8 +1793,8 @@ qtconsole = [
     {file = "qtconsole-5.1.1.tar.gz", hash = "sha256:bbc34bca14f65535afcb401bc74b752bac955e5313001ba640383f7e5857dc49"},
 ]
 qtpy = [
-    {file = "QtPy-1.11.1-py2.py3-none-any.whl", hash = "sha256:78f48d7cee7848f92c49ab998f63ca932fddee4b1f89707d6b73eeb0a7110324"},
-    {file = "QtPy-1.11.1.tar.gz", hash = "sha256:d471fcb9cf96315b564ad3b42ca830d0286d1049d6a44c578d3dc3836381bb91"},
+    {file = "QtPy-1.11.2-py2.py3-none-any.whl", hash = "sha256:83c502973e9fdd7b648d8267a421229ea3d9a0651c22e4c65a4d9228479c39b6"},
+    {file = "QtPy-1.11.2.tar.gz", hash = "sha256:d6e4ae3a41f1fcb19762b58f35ad6dd443b4bdc867a4cb81ef10ccd85403c92b"},
 ]
 requests = [
     {file = "requests-2.26.0-py2.py3-none-any.whl", hash = "sha256:6c1246513ecd5ecd4528a0906f910e8f0f9c6b8ec72030dc9fd154dc1a6efd24"},

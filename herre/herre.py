@@ -3,6 +3,7 @@
 
 from enum import Enum
 from typing import List, Optional
+import fakts
 from herre.config import HerreConfig
 from herre.grants.code_server.app import AuthorizationCodeServerGrant
 from herre.grants.backend.app import BackendGrant
@@ -13,8 +14,8 @@ from koil import get_current_koil, Koil
 import time
 
 from koil.loop import koil
-from konfik.config.base import Config
-from konfik.konfik import Konfik, get_current_konfik
+
+from fakts import Fakts, get_current_fakts, Config
 from herre.grants.registry import GrantRegistry, get_current_grant_registry
 
 
@@ -32,8 +33,9 @@ class Herre:
     def __init__(self,
         *args,
         register = True,
+        config: HerreConfig = None,
         koil: Koil = None,
-        konfik: Konfik = None,
+        fakts: Fakts = None,
         granty_registry: GrantRegistry = None,
         **kwargs
     ) -> None:
@@ -49,7 +51,8 @@ class Herre:
         Raises:
             HerreError: [description]
         """
-        self.konfik = konfik or get_current_konfik()
+        self.config = config 
+        self.fakts = fakts or get_current_fakts()
         self.grant_registry = granty_registry or get_current_grant_registry()
         self.koil = koil or get_current_koil()
         self.grant = None
@@ -63,24 +66,26 @@ class Herre:
 
 
     async def alogin(self, **kwargs):
-        if not self.konfik.loaded:
-            await self.konfik.aload()
+        if not self.config:
+            if not self.fakts.loaded:
+                await self.fakts.aload()
 
-        self.config = HerreConfig.from_konfik(konfik=self.konfik)
-        self.grant = self.grant_registry.get_grant_for_type(self.config.authorization_grant_type)(self.config, konfik=self.konfik)
+            self.config = HerreConfig.from_fakts(fakts=self.fakts)
+        
+        self.grant = self.grant_registry.get_grant_for_type(self.config.authorization_grant_type)(self.config, fakts=self.fakts)
         return await self.grant.alogin(**kwargs)
 
     async def alogout(self):
         assert self.grant, "We have never logged in"
-        return await self.grant.alogin()
+        return await self.grant.alogout()
 
     async def arefresh(self):
         assert self.grant, "We have never logged in"
         return await self.grant.arefresh()
 
 
-    def login(self, username: str = None, password: str = None):
-        return koil(self.alogin(username=username, password=password))
+    def login(self, **kwargs):
+        return koil(self.alogin(**kwargs))
 
     def logout(self):
         return koil(self.alogout())

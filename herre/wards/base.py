@@ -4,10 +4,8 @@ from herre.wards.variables import parse_variables
 from herre import get_current_herre
 import asyncio
 from koil import Koil, get_current_koil
-from konfik import Konfik, get_current_konfik
+from fakts import Fakts, get_current_fakts, Config
 from koil.loop import koil
-import konfik
-from konfik.config.base import Config
 
 class WardException(Exception):
     pass
@@ -74,10 +72,10 @@ class BaseWard(metaclass=WardMeta):
     id: str
     configClass = Config
 
-    def __init__(self, *args,  herre: Herre = None, koil: Koil = None, konfik: Konfik = None, max_retries = 4, **kwargs) -> None:
+    def __init__(self, *args,  herre: Herre = None, koil: Koil = None, fakts: Fakts = None, max_retries = 4, **kwargs) -> None:
         self.herre = herre or get_current_herre()
         self.koil = koil or get_current_koil()
-        self.konfik = konfik or get_current_konfik()
+        self.fakts = fakts or get_current_fakts()
         self.connected = False
         self.transcript = None
         self.config = None
@@ -123,13 +121,14 @@ class BaseWard(metaclass=WardMeta):
         self.connected = False
 
     async def aconnect(self): 
+        if not self.fakts.loaded:
+            await self.fakts.aload()
+
+
         if not self.herre.logged_in:
             await self.herre.login()
 
-        if not self.konfik.loaded:
-            await self.konfik.aload()
-
-        self.config = self.configClass.from_konfik(konfik=self.konfik)
+        self.config = self.configClass.from_fakts(fakts=self.fakts)
         await self.handle_connect()
         self.connected = True
         self.transcript = await self.negotiate()

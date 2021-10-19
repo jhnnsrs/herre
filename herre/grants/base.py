@@ -14,7 +14,8 @@ import requests
 import logging
 import aiohttp
 import shelve
-from konfik import get_current_konfik, Konfik
+
+from fakts import Fakts, get_current_fakts, Config
 
 logger = logging.getLogger(__name__)
 
@@ -32,13 +33,13 @@ class BaseGrant(ABC):
     refreshable = False
     type = None
 
-    def __init__(self, herre_config: HerreConfig,  token_url="o/token/", authorize_url="o/authorize/", token_file: str = "token.temp", save_token = True, max_retries = 3, konfik: Konfik = None, **kwargs) -> None:
-        self.konfik = konfik or get_current_konfik()
+    def __init__(self, herre_config: HerreConfig,  token_url="o/token/", authorize_url="o/authorize/", token_file: str = "token.temp", save_token = True, max_retries = 3, facts: Fakts = None, **kwargs) -> None:
+        self.facts = facts or get_current_fakts()
         self.config = herre_config
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "0" if self.config.secure else "1"
 
 
-        self.base_url = f'{"https" if self.config.secure else "http"}://{self.config.host}:{self.config.port}/'
+        self.base_url = f'{"https" if self.config.secure else "http"}://{self.config.host}:{self.config.port}{self.config.subpath}/'
         self.auth_url = self.base_url + authorize_url
         self.token_url = self.base_url + token_url
         self.userinfo_url = self.base_url + "userinfo/"
@@ -84,15 +85,28 @@ class BaseGrant(ABC):
         if not force_relogin:
             try:
                 with shelve.open(self.token_file) as cfg:
-                    self.token = cfg['token']
+                    client_id = cfg["client_id"]
+                    if client_id == self.config.client_id:
+                        self.token = cfg['token']
+                    else:
+                        logger.info("Omitting old token")
+
             except KeyError:
                 pass
+                
+        print(self.token)
+        print("Hallo")
 
-        self.token = self.token or await self.fetch_token(**kwargs)
+        if not self.token:
+            self.token = await self.afetch_token(**kwargs)
+
+        
         assert self.token is not None, "We have received not Token back from our Grant"
         assert "access_token" in self.token, "Returned token does not have an access_token"
 
 
+        print(self.token)
+        print("Nano")
         if "refresh_token" in self.token:
             self.can_refresh = True
 
@@ -101,14 +115,22 @@ class BaseGrant(ABC):
             async with aiohttp.ClientSession(headers={"Authorization": f"Bearer {self.access_token}"}) as session:
                 async with session.get(self.userinfo_url) as resp:
                     user_json = await resp.json()
-                    self._user = User(**user_json)
+                    if "detail" in user_json:
+                        raise Exception(user_json["detail"])
+                        
+                    try:
+                        self._user = User(**user_json)
+                    except:
+                        self._user = None
 
                     if self.save_token:
                         with shelve.open(self.token_file) as cfg:
                             cfg['token'] = self.token
+                            cfg['client_id'] = self.config.client_id
+
 
         except Exception as e:
-            logger.exception(e)
+            logger.error("Token Invalid")
             await self.alogin(force_relogin=True, **kwargs)
             
 
@@ -118,6 +140,7 @@ class BaseGrant(ABC):
         try:
             with shelve.open(self.token_file) as cfg:
                 cfg["token"] = None
+                cfg["client_id"] = None
         except KeyError:
             pass
 
@@ -125,11 +148,12 @@ class BaseGrant(ABC):
         self._user = None
 
 
-    async def arefresh_token(self, **kwargs):
+    async def arefresh(self, **kwargs):
         assert "refresh_token" in self.token, "Token had not refresh-token attached"
         async with aiohttp.ClientSession() as session:
             async with session.post(self.refresh_url, data={"grant_type": "refresh_token", "refresh_token": self.token["refresh_token"], "client_id": self.config.client_id, "client_secret": self.config.client_secret}) as resp:
                 self.token =  await resp.json()
+                print(self.token)
                 assert "access_token" in self.token, "Returned refreshed token does not have an access_token"
                 if "refresh_token" in self.token:
                     self.can_refresh = True

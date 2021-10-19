@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import List, Optional
-from konfik import Config
+
+from fakts import Fakts, get_current_fakts, Config
 
 
 
@@ -13,7 +14,7 @@ class GrantType(str, Enum):
     AUTHORIZATION_CODE_SERVER = "AUTHORIZATION_CODE_SERVER"
 
 class HerreConfig(Config):
-
+    subpath: str = ""
     secure: bool 
     host: str
     port: int
@@ -25,7 +26,7 @@ class HerreConfig(Config):
     jupyter_sync: bool = False
     username: Optional[str]
     password: Optional[str]
-    timeout: int = 10
+    timeout: int = 500
 
     class Config:
         group = "herre"

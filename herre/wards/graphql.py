@@ -4,9 +4,8 @@ from herre.wards.base import BaseQuery, BaseWard, WardException
 import aiohttp
 import logging
 import re
-
 from herre.wards.variables import parse_variables
-from konfik.config.base import Config
+from fakts import Fakts, get_current_fakts, Config
 
 logger = logging.getLogger(__name__)
 
