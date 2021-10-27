@@ -114,8 +114,7 @@ class BaseWard(metaclass=WardMeta):
         return koil(self.arun(query, variables))
 
 
-    async def adisconnect(self):  
-        print("Doind this here")      
+    async def adisconnect(self):       
         await self.handle_disconnect()
         self.transcript = None
         self.connected = False

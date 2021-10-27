@@ -70,7 +70,6 @@ class AuthorizationCodeServerGrant(BaseGrant):
         for tf in done:
             if tf == token_future:
                 path = tf.result()
-                print(path)
             else:
                 path = None
 

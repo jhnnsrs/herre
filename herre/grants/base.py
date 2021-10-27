@@ -94,8 +94,6 @@ class BaseGrant(ABC):
             except KeyError:
                 pass
                 
-        print(self.token)
-        print("Hallo")
 
         if not self.token:
             self.token = await self.afetch_token(**kwargs)
@@ -104,9 +102,6 @@ class BaseGrant(ABC):
         assert self.token is not None, "We have received not Token back from our Grant"
         assert "access_token" in self.token, "Returned token does not have an access_token"
 
-
-        print(self.token)
-        print("Nano")
         if "refresh_token" in self.token:
             self.can_refresh = True
 
@@ -153,7 +148,6 @@ class BaseGrant(ABC):
         async with aiohttp.ClientSession() as session:
             async with session.post(self.refresh_url, data={"grant_type": "refresh_token", "refresh_token": self.token["refresh_token"], "client_id": self.config.client_id, "client_secret": self.config.client_secret}) as resp:
                 self.token =  await resp.json()
-                print(self.token)
                 assert "access_token" in self.token, "Returned refreshed token does not have an access_token"
                 if "refresh_token" in self.token:
                     self.can_refresh = True

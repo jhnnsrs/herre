@@ -101,7 +101,6 @@ class GraphQLWard(BaseWard):
 
         try:
             assert retry < self.max_retries, f"Retries Exceeded for Request {gql} with {variables}"
-            print(self.config.endpoint)
             async with self.async_session.post(self.config.endpoint, json={"query": gql.query, "variables": variables}) as resp:
                 
                 if resp.status == 200:

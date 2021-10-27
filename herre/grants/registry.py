@@ -1,7 +1,10 @@
 from typing import Dict
 from .base import BaseGrant
 from herre.config import GrantType
+import logging
 
+
+logger = logging.getLogger(__name__)
 
 class GrantRegistry:
 
@@ -16,10 +19,10 @@ class GrantRegistry:
 
     
 def register_grant(type: GrantType):
-    print("Registering Grant")
 
     def rea_decorator(grant):
         assert issubclass(grant, BaseGrant), "Grant must subclass BaseGrant"
+        logger.info(f"Registering Grant {grant} for {type}")
         get_current_grant_registry().register_grant(type, grant)
         return grant
 

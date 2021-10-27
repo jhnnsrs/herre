@@ -15,6 +15,6 @@ class QtHerre(Herre, QtWidgets.QWidget):
 
 
     async def alogout(self, **kwargs):
-        nana = await super().adelete(**kwargs)
+        nana = await super().alogout(**kwargs)
         self.login_signal.emit(False)
         return nana

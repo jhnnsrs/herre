@@ -85,10 +85,10 @@ class Herre:
 
 
     def login(self, **kwargs):
-        return koil(self.alogin(**kwargs))
+        return koil(self.alogin(), **kwargs)
 
-    def logout(self):
-        return koil(self.alogout())
+    def logout(self, **kwargs):
+        return koil(self.alogout(), **kwargs)
     
     def refresh(self):
         return koil(self.arefresh())
