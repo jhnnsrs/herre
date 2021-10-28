@@ -77,7 +77,7 @@ class SchemaRegistry():
             ward = get_ward_registry().get_ward_instance(key=key)
             assert isinstance(ward, GraphQLWard), "Ward is not of instance GraphQL schemas only supported by GRAPHQL"
 
-            introspection_query = await ward._run_async(ParsedQuery("""
+            introspection_query = await ward.arun(ParsedQuery("""
                                     query Schema {
                     __schema {
                         queryType {
@@ -142,7 +142,7 @@ class TypedQuery:
 
 
     async def arun(self, **variables):
-        result = await self.ward._run_async(self.query, variables=variables)
+        result = await self.ward.arun(self.query, variables=variables)
         expanded = await get_schema_registry().expand_from_schema(self.ward_key, self.query, result, collapse=self.collapse)
         return expanded
 

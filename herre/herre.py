@@ -3,6 +3,9 @@
 
 from enum import Enum
 from typing import List, Optional
+import aiohttp
+
+from pydantic.main import BaseModel
 import fakts
 from herre.config import HerreConfig
 from herre.grants.code_server.app import AuthorizationCodeServerGrant
@@ -10,8 +13,10 @@ from herre.grants.backend.app import BackendGrant
 from herre.grants.backend.app import BackendGrant
 import os
 import logging
+from herre.types import HerreState, User
 from koil import get_current_koil, Koil
 import time
+import shelve
 
 from koil.loop import koil
 
@@ -28,6 +33,8 @@ class HerreError(Exception):
     pass
 
 
+
+
 class Herre:
 
     def __init__(self,
@@ -36,6 +43,8 @@ class Herre:
         config: HerreConfig = None,
         koil: Koil = None,
         fakts: Fakts = None,
+        token_file = "token.temp",
+        userinfo_url = "userinfo/",
         granty_registry: GrantRegistry = None,
         **kwargs
     ) -> None:
@@ -55,29 +64,82 @@ class Herre:
         self.fakts = fakts or get_current_fakts()
         self.grant_registry = granty_registry or get_current_grant_registry()
         self.koil = koil or get_current_koil()
-        self.grant = None
 
+        self.grant = None
+        self.state: HerreState = None
+        self.token_file = token_file
         if register:
             set_current_herre(self)
 
         super().__init__(*args, **kwargs)
 
 
-
-
-    async def alogin(self, **kwargs):
+    async def alogin(self, force_relogin=False, **kwargs) -> HerreState:
         if not self.config:
             if not self.fakts.loaded:
                 await self.fakts.aload()
 
             self.config = HerreConfig.from_fakts(fakts=self.fakts)
+
+        if not force_relogin:
+            try:
+                with shelve.open(self.token_file) as cfg:
+                    client_id = cfg["client_id"]
+                    if client_id == self.config.client_id:
+                        self.state = HerreState(**cfg['state'])
+                    else:
+                        logger.info("Omitting old token")
+
+            except KeyError:
+                pass
+
+
+        if not self.state:
+            self.grant = self.grant_registry.get_grant_for_type(self.config.authorization_grant_type)(self.config, fakts=self.fakts)
+            token_dict = await self.grant.afetch_token(**kwargs)
+            self.state = HerreState(**token_dict, client_id= self.config.client_id)
+
+        try:
+            base_url = f'{"https" if self.config.secure else "http"}://{self.config.host}:{self.config.port}{self.config.subpath}/'
+            user_info_endpoint = base_url + "userinfo/"
+
+
+            async with aiohttp.ClientSession(headers={"Authorization": f"Bearer {self.state.access_token}"}) as session:
+                async with session.get(user_info_endpoint) as resp:
+                    user_json = await resp.json()
+                    if "detail" in user_json:
+                        raise Exception(user_json["detail"])
+                        
+                    try:
+                        self.state.user = User(**user_json)
+                    except:
+                        self.state.user = None
+
+                    with shelve.open(self.token_file) as cfg:
+                        cfg['client_id'] = self.state.client_id
+                        cfg['state'] = self.state.dict()
+
+
+        except Exception as e:
+            logger.error("Token Invalid")
+            await self.alogin(force_relogin=True, **kwargs)
         
-        self.grant = self.grant_registry.get_grant_for_type(self.config.authorization_grant_type)(self.config, fakts=self.fakts)
-        return await self.grant.alogin(**kwargs)
+        
+
+        return self.state
 
     async def alogout(self):
-        assert self.grant, "We have never logged in"
-        return await self.grant.alogout()
+        if self.grant:
+            return await self.grant.alogout()
+
+        try:
+            with shelve.open(self.token_file) as cfg:
+                cfg["state"] = None
+                cfg["client_id"] = None
+        except KeyError:
+            pass
+
+        self.state = None
 
     async def arefresh(self):
         assert self.grant, "We have never logged in"
@@ -96,17 +158,18 @@ class Herre:
 
     @property
     def logged_in(self):
-        return self.grant and self.grant.logged_in
+        return self.state is not None
 
     @property
     def user(self):
-        assert self.grant.logged_in, "User is not logged in"
-        return self.grant.user
+        assert self.state, "We are not yet logged in"
+        assert self.state.user, "Login is not associated with a user"
+        return self.state.user
 
     @property
     def headers(self):
-        assert self.grant.access_token is not None, "Access token is not set yet, please login?"
-        return {"Authorization": f"Bearer {self.grant.access_token}"}
+        assert self.state, "We are not yet logged in"
+        return {"Authorization": f"Bearer {self.state.access_token}"}
 
 
 

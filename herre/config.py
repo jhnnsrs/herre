@@ -28,5 +28,9 @@ class HerreConfig(Config):
     password: Optional[str]
     timeout: int = 500
 
+
     class Config:
         group = "herre"
+
+
+    

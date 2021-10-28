@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "herre"
-version = "0.1.33"
+version = "0.1.34"
 readme = "README.md"
 description = "The governing package for modules of the arnheim framework, it provides core features like wards, the event loop and authentication with an oauth provider"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
@@ -18,7 +18,7 @@ PyQtWebEngine = { version ="^5.15.4", optional=true}
 requests-oauthlib = "^1.3.0"
 rich = "^10.9.0"
 aiohttp = "^3.7.4"
-fakts = "^0.1.11"
+fakts = "^0.1.13"
 
 [tool.poetry.extras]
 jupyter = ["jupyter"]
