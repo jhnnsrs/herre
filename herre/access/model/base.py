@@ -8,10 +8,10 @@ from herre.wards.base import BaseWard
 ModelType = TypeVar("ModelType", bound="Model", covariant=True)
 ClassType = TypeVar("ClassType", covariant=True)
 
-class BaseModelManager:
 
+class BaseModelManager:
     def __init__(self, modelClass: ModelType = None) -> None:
-        self.modelClass =  modelClass
+        self.modelClass = modelClass
         super().__init__()
 
     def __call__(self, modelClass: ModelType):
@@ -21,12 +21,12 @@ class BaseModelManager:
     @property
     def ward(self) -> BaseWard:
         from herre.wards.registry import get_ward_registry
+
         return get_ward_registry().get_ward_instance(self.modelClass.Meta.ward)
 
 
-
 class SyncModelManager(Generic[ModelType], BaseModelManager):
-    """ A Manager to get Models from Packer
+    """A Manager to get Models from Packer
     syncrhonisouly
 
     Args:
@@ -38,7 +38,7 @@ class SyncModelManager(Generic[ModelType], BaseModelManager):
 
     @abstractmethod
     def get(self, id: str, **kwargs) -> ModelType:
-        """Fetches an instance of Model on 
+        """Fetches an instance of Model on
 
         Args:
             id (str): The unque UI
@@ -50,11 +50,9 @@ class SyncModelManager(Generic[ModelType], BaseModelManager):
 
 
 class AsyncModelManager(Generic[ModelType], BaseModelManager):
-
-
     @abstractmethod
     async def get(self, id: str = None, **kwargs) -> ModelType:
-        """Fetches an instance of Model on 
+        """Fetches an instance of Model on
 
         Args:
             id (str, optional): The unque UI
@@ -64,10 +62,9 @@ class AsyncModelManager(Generic[ModelType], BaseModelManager):
         """
         raise NotImplementedError("Please use a Subclass")
 
-    
     @abstractmethod
     async def create(self, **kwargs) -> ModelType:
-        """Create an instance of Model on the Website 
+        """Create an instance of Model on the Website
 
         Args:
             id (str, optional): The unque UI
@@ -80,7 +77,7 @@ class AsyncModelManager(Generic[ModelType], BaseModelManager):
 
 class ModelMeta(ModelMetaclass):
     """
-    The Model Meta class extends the Pydantic Metaclass and adds in 
+    The Model Meta class extends the Pydantic Metaclass and adds in
     syncrhonous and asynchronous Managers. These Managers allow direct
     interaction with serverside Objects mimicking the Django ORM Scheme
     (https://docs.djangoproject.com/en/3.2/topics/db/queries/) it
@@ -97,19 +94,22 @@ class ModelMeta(ModelMetaclass):
         ModelMetaclass ([type]): [description]
     """
 
-
     def __new__(mcls, name, bases, attrs):
-        slots = set(attrs.pop('__slots__', tuple())) # The slots from: https://github.com/samuelcolvin/pydantic/issues/655#issuecomment-610900376
+        slots = set(
+            attrs.pop("__slots__", tuple())
+        )  # The slots from: https://github.com/samuelcolvin/pydantic/issues/655#issuecomment-610900376
         for base in bases:
-            if hasattr(base, '__slots__'):
+            if hasattr(base, "__slots__"):
                 slots.update(base.__slots__)
 
-        if '__dict__' in slots:
-            slots.remove('__dict__')
-        attrs['__slots__'] = tuple(slots)
+        if "__dict__" in slots:
+            slots.remove("__dict__")
+        attrs["__slots__"] = tuple(slots)
 
         mcls.overriden_manager = attrs.pop("objects") if "objects" in attrs else None
-        mcls.overriden_async_manager = attrs.pop("asyncs") if "asyncs" in attrs else None
+        mcls.overriden_async_manager = (
+            attrs.pop("asyncs") if "asyncs" in attrs else None
+        )
         return super(ModelMeta, mcls).__new__(mcls, name, bases, attrs)
 
     @property
@@ -124,13 +124,18 @@ class ModelMeta(ModelMetaclass):
             cls.__asyncs = cls.get_asyncclass()(cls)
         return cls.__asyncs
 
+    @property
+    def get_meta(cls: Type[ModelType]):
+        return cls.__meta
 
     def __init__(self, name, bases, attrs):
         super(ModelMeta, self).__init__(name, bases, attrs)
         if attrs["__qualname__"] != "Model":
             # This gets allso called for our Baseclass which is abstract
             self.__meta = attrs["Meta"] if "Meta" in attrs else None
-            assert self.__meta is not None, f"Please provide a Meta class in your Arnheim Model {name}"
+            assert (
+                self.__meta is not None
+            ), f"Please provide a Meta class in your Arnheim Model {name}"
 
             try:
                 if self.__meta.abstract:
@@ -138,15 +143,22 @@ class ModelMeta(ModelMetaclass):
             except:
                 pass
 
-            self.__objects = self.overriden_manager(self) if self.overriden_manager else None
-            self.__asyncs =  self.overriden_async_manager(self) if self.overriden_async_manager else None
-            
+            self.__objects = (
+                self.overriden_manager(self) if self.overriden_manager else None
+            )
+            self.__asyncs = (
+                self.overriden_async_manager(self)
+                if self.overriden_async_manager
+                else None
+            )
+
             register = getattr(self.__meta, "register", True)
-            assert hasattr(self.__meta, "ward"), f"Please specifiy which Ward this Model should use in Meta of  {attrs['__qualname__']}"
+            assert hasattr(
+                self.__meta, "ward"
+            ), f"Please specifiy which Ward this Model should use in Meta of  {attrs['__qualname__']}"
 
             if register:
                 self.register_model(meta=self.__meta)
-
 
 
 class Model(BaseModel, metaclass=ModelMeta):
@@ -169,19 +181,24 @@ class Model(BaseModel, metaclass=ModelMeta):
     Returns:
         [type]: [description]
     """
+
     id: Optional[str]
 
     @abstractclassmethod
     def get_objectsclass(cls):
-        raise NotImplementedError("Please provide an Implementatoin of SyncModelManager")
+        raise NotImplementedError(
+            "Please provide an Implementatoin of SyncModelManager"
+        )
 
     @abstractclassmethod
     def get_asyncclass(cls):
-        raise NotImplementedError("Please provide an Implementatoin of SyncModelManager")
+        raise NotImplementedError(
+            "Please provide an Implementatoin of SyncModelManager"
+        )
 
     @classmethod
     def register_model(cls):
-        """ Will be invoked by the meta class and will make this model
+        """Will be invoked by the meta class and will make this model
         register with other models if wanted
 
         Returns:

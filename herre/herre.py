@@ -1,6 +1,3 @@
-
-
-
 from enum import Enum
 from typing import List, Optional
 import aiohttp
@@ -24,31 +21,28 @@ from fakts import Fakts, get_current_fakts, Config
 from herre.grants.registry import GrantRegistry, get_current_grant_registry
 
 
-
 logger = logging.getLogger(__name__)
-
 
 
 class HerreError(Exception):
     pass
 
 
-
-
 class Herre:
-
-    def __init__(self,
+    def __init__(
+        self,
         *args,
-        register = True,
+        register=True,
         config: HerreConfig = None,
         koil: Koil = None,
         fakts: Fakts = None,
-        token_file = "token.temp",
-        userinfo_url = "userinfo/",
+        token_file="token.temp",
+        userinfo_url="userinfo/",
         granty_registry: GrantRegistry = None,
-        **kwargs
+        max_retries=5,
+        **kwargs,
     ) -> None:
-        """ Creates A Herre Client
+        """Creates A Herre Client
 
         Args:
             config_path (str, optional): [description]. Defaults to "bergen.yaml".
@@ -60,71 +54,76 @@ class Herre:
         Raises:
             HerreError: [description]
         """
-        self.config = config 
-        self.fakts = fakts or get_current_fakts()
+        self.config = config
+        self.max_retries = max_retries
+        self.fakts: Fakts = fakts or get_current_fakts()
         self.grant_registry = granty_registry or get_current_grant_registry()
         self.koil = koil or get_current_koil()
 
         self.grant = None
         self.state: HerreState = None
-        self.token_file = token_file
+        self.token_file = (
+            f"{self.fakts.subapp}.{token_file}" if self.fakts.subapp else token_file
+        )
         if register:
             set_current_herre(self)
 
         super().__init__(*args, **kwargs)
 
-
-    async def alogin(self, force_relogin=False, **kwargs) -> HerreState:
+    async def alogin(self, force_relogin=False, retry=0, **kwargs) -> HerreState:
+        if retry > self.max_retries:
+            raise Exception("Exceeded Login Retries")
         if not self.config:
             if not self.fakts.loaded:
                 await self.fakts.aload()
 
-            self.config = HerreConfig.from_fakts(fakts=self.fakts)
+            self.config = await HerreConfig.from_fakts(fakts=self.fakts)
 
-        if not force_relogin:
+        if not force_relogin and not self.config.no_temp:
             try:
                 with shelve.open(self.token_file) as cfg:
                     client_id = cfg["client_id"]
                     if client_id == self.config.client_id:
-                        self.state = HerreState(**cfg['state'])
+                        self.state = HerreState(**cfg["state"])
                     else:
                         logger.info("Omitting old token")
 
             except KeyError:
                 pass
 
-
         if not self.state:
-            self.grant = self.grant_registry.get_grant_for_type(self.config.authorization_grant_type)(self.config, fakts=self.fakts)
+            self.grant = self.grant_registry.get_grant_for_type(
+                self.config.authorization_grant_type
+            )(self.config, fakts=self.fakts)
             token_dict = await self.grant.afetch_token(**kwargs)
-            self.state = HerreState(**token_dict, client_id= self.config.client_id)
+            self.state = HerreState(**token_dict, client_id=self.config.client_id)
 
         try:
             base_url = f'{"https" if self.config.secure else "http"}://{self.config.host}:{self.config.port}{self.config.subpath}/'
             user_info_endpoint = base_url + "userinfo/"
 
-
-            async with aiohttp.ClientSession(headers={"Authorization": f"Bearer {self.state.access_token}"}) as session:
+            async with aiohttp.ClientSession(
+                headers={"Authorization": f"Bearer {self.state.access_token}"}
+            ) as session:
                 async with session.get(user_info_endpoint) as resp:
                     user_json = await resp.json()
                     if "detail" in user_json:
                         raise Exception(user_json["detail"])
-                        
+
                     try:
                         self.state.user = User(**user_json)
                     except:
                         self.state.user = None
 
-                    with shelve.open(self.token_file) as cfg:
-                        cfg['client_id'] = self.state.client_id
-                        cfg['state'] = self.state.dict()
-
+                    if not self.config.no_temp:
+                        with shelve.open(self.token_file) as cfg:
+                            cfg["client_id"] = self.state.client_id
+                            cfg["state"] = self.state.dict()
 
         except Exception as e:
-            logger.error("Token Invalid")
-            await self.alogin(force_relogin=True, **kwargs)
-        
-        
+            logger.error(f"Token Invalid {e}")
+            self.state = None
+            await self.alogin(force_relogin=True, retry=retry + 1, **kwargs)
 
         return self.state
 
@@ -145,16 +144,14 @@ class Herre:
         assert self.grant, "We have never logged in"
         return await self.grant.arefresh()
 
-
     def login(self, **kwargs):
         return koil(self.alogin(), **kwargs)
 
     def logout(self, **kwargs):
         return koil(self.alogout(), **kwargs)
-    
+
     def refresh(self):
         return koil(self.arefresh())
-
 
     @property
     def logged_in(self):
@@ -172,15 +169,15 @@ class Herre:
         return {"Authorization": f"Bearer {self.state.access_token}"}
 
 
-
-
 CURRENT_HERRE = None
+
 
 def get_current_herre(**kwargs):
     global CURRENT_HERRE
     if not CURRENT_HERRE:
         CURRENT_HERRE = Herre(**kwargs)
     return CURRENT_HERRE
+
 
 def set_current_herre(herre):
     global CURRENT_HERRE
