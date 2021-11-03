@@ -34,12 +34,12 @@ class Herre:
         *args,
         register=True,
         config: HerreConfig = None,
-        koil: Koil = None,
         fakts: Fakts = None,
         token_file="token.temp",
         userinfo_url="userinfo/",
         granty_registry: GrantRegistry = None,
         max_retries=5,
+        no_temp=False,
         **kwargs,
     ) -> None:
         """Creates A Herre Client
@@ -58,8 +58,7 @@ class Herre:
         self.max_retries = max_retries
         self.fakts: Fakts = fakts or get_current_fakts()
         self.grant_registry = granty_registry or get_current_grant_registry()
-        self.koil = koil or get_current_koil()
-
+        self.no_temp = no_temp
         self.grant = None
         self.state: HerreState = None
         self.token_file = (
@@ -79,7 +78,7 @@ class Herre:
 
             self.config = await HerreConfig.from_fakts(fakts=self.fakts)
 
-        if not force_relogin and not self.config.no_temp:
+        if not force_relogin and not self.config.no_temp and not self.no_temp:
             try:
                 with shelve.open(self.token_file) as cfg:
                     client_id = cfg["client_id"]
@@ -88,7 +87,7 @@ class Herre:
                     else:
                         logger.info("Omitting old token")
 
-            except KeyError:
+            except Exception:
                 pass
 
         if not self.state:
@@ -96,7 +95,9 @@ class Herre:
                 self.config.authorization_grant_type
             )(self.config, fakts=self.fakts)
             token_dict = await self.grant.afetch_token(**kwargs)
-            self.state = HerreState(**token_dict, client_id=self.config.client_id)
+            self.state = HerreState(
+                **token_dict, client_id=self.config.client_id, scopes=self.config.scopes
+            )
 
         try:
             base_url = f'{"https" if self.config.secure else "http"}://{self.config.host}:{self.config.port}{self.config.subpath}/'
@@ -162,6 +163,12 @@ class Herre:
         assert self.state, "We are not yet logged in"
         assert self.state.user, "Login is not associated with a user"
         return self.state.user
+
+    @property
+    def scopes(self):
+        assert self.state, "We are not yet logged in"
+        assert self.state.scopes, "Login is not associated with a user"
+        return self.state.scopes
 
     @property
     def headers(self):

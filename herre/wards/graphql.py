@@ -104,7 +104,7 @@ class GraphQLWard(BaseWard):
         self.connected = False
 
     async def handle_run(self, gql: ParsedQuery, variables: dict = {}, retry=0):
-
+        print(variables)
         try:
             assert (
                 retry < self.max_retries

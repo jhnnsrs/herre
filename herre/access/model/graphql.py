@@ -80,10 +80,7 @@ class GraphQLModel(Model, QueryVariable):
     def __init__(__pydantic_self__, **data: Any) -> None:
         if "__typename" not in data:
             data["__typename"] = __pydantic_self__.__class__.__name__
-        try:
-            super().__init__(**data)
-        except ValidationError as e:
-            raise GraphQLExpansionError(f"Couldn't expand {data} ") from e
+        super().__init__(**data)
 
     @validator("typename")
     def typename_matches_class(cls, v):
@@ -112,6 +109,9 @@ class GraphQLModel(Model, QueryVariable):
         )
 
     async def to_variable(self):
+        assert (
+            self.id
+        ), f"If you want to send a Model over as a Variable make sure to save it first {self}"
         return self.id
 
     @classmethod
