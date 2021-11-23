@@ -8,8 +8,6 @@ from herre.console.context import get_current_console
 from herre.config import HerreConfig
 from abc import ABC
 import os 
-import asyncio
-import requests
 import logging
 import aiohttp
 import shelve

@@ -95,6 +95,7 @@ class Herre:
                 self.config.authorization_grant_type
             )(self.config, fakts=self.fakts)
             token_dict = await self.grant.afetch_token(**kwargs)
+            print(token_dict)
             self.state = HerreState(
                 **token_dict, client_id=self.config.client_id, scopes=self.config.scopes
             )

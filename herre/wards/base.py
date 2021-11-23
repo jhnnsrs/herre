@@ -97,7 +97,7 @@ class BaseWard(metaclass=WardMeta):
         super().__init__()
 
     @abstractmethod
-    async def handle_run(self, query: BaseQuery, parsed_variables: dict):
+    async def handle_run(self, query: BaseQuery, parsed_variables: dict, files: dict):
         raise NotImplementedError("Your Ward must overwrite run")
 
     @abstractmethod
@@ -119,7 +119,9 @@ class BaseWard(metaclass=WardMeta):
         if not self.connected:
             await self.aconnect()
 
-        return await self.handle_run(query, await parse_variables(variables))
+        variables, files = await parse_variables(variables)
+
+        return await self.handle_run(query, variables, files)
 
     def run(self, query: BaseQuery, variables: dict = {}):
         return koil(self.arun(query, variables))

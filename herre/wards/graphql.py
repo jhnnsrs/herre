@@ -1,4 +1,6 @@
 from abc import abstractproperty
+import json
+from typing import Any, Dict
 from herre.exceptions import TokenExpired
 from herre.wards.base import BaseQuery, BaseWard, WardException
 import aiohttp
@@ -103,13 +105,50 @@ class GraphQLWard(BaseWard):
         await self.async_session.close()
         self.connected = False
 
-    async def handle_run(self, gql: ParsedQuery, variables: dict = {}, retry=0):
+    async def handle_run(
+        self, gql: ParsedQuery, variables: dict = {}, files: dict = {}, retry=0
+    ):
         try:
             assert (
                 retry < self.max_retries
             ), f"Retries Exceeded for Request {gql} with {variables}"
+
+            payload = {"query": gql.query}
+
+            if len(files.items()) > 0:
+                # We have to uload files
+
+                payload["variables"] = variables
+
+                data = aiohttp.FormData()
+
+                file_map = {str(i): [path] for i, path in enumerate(files)}
+                # Enumerate the file streams
+                # Will generate something like {'0': <_io.BufferedReader ...>}
+                file_streams = {str(i): files[path] for i, path in enumerate(files)}
+                operations_str = json.dumps(payload)
+
+                data.add_field(
+                    "operations", operations_str, content_type="application/json"
+                )
+                file_map_str = json.dumps(file_map)
+                data.add_field("map", file_map_str, content_type="application/json")
+
+                for k, v in file_streams.items():
+                    data.add_field(
+                        k,
+                        v,
+                        filename=getattr(v, "name", k),
+                    )
+
+                post_args: Dict[str, Any] = {"data": data}
+
+            else:
+                payload["variables"] = variables
+                post_args = {"json": payload}
+
             async with self.async_session.post(
-                self.config.endpoint, json={"query": gql.query, "variables": variables}
+                self.config.endpoint, **post_args
             ) as resp:
 
                 if resp.status == 200:
