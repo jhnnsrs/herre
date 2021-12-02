@@ -1,25 +1,14 @@
 from herre.config import GrantType
 from herre.grants.base import BaseGrant
 from oauthlib.oauth2 import WebApplicationClient
-from requests_oauthlib.oauth2_session import OAuth2Session
-from aiohttp import ClientSession
-import requests
+from herre.grants.session import OAuth2Session
 import webbrowser
-from http.server import BaseHTTPRequestHandler, HTTPServer
-import aiohttp
 from aiohttp import web
 import asyncio
 import logging
-
 from herre.grants.registry import register_grant
 
-
 logger = logging.getLogger(__name__)
-
-
-
-
-
 
 
 def wrapped_future(future):
@@ -32,10 +21,16 @@ def wrapped_future(future):
 
 async def wait_for_server(app, host="localhost", port="6767", timeout=1):
     try:
-        await asyncio.wait_for(web._run_app(app, host="localhost", port=6767, ), timeout)
+        await asyncio.wait_for(
+            web._run_app(
+                app,
+                host="localhost",
+                port=6767,
+            ),
+            timeout,
+        )
     except asyncio.TimeoutError:
         return "no token"
-
 
 
 @register_grant(GrantType.AUTHORIZATION_CODE)
@@ -45,43 +40,60 @@ class AuthorizationCodeServerGrant(BaseGrant):
 
     async def afetch_token(self, **kwargs):
 
-        self.web_app_client = WebApplicationClient(self.config.client_id, scope=self.scope)
-
-        # Create an OAuth2 session for the OSF
-        self.session = OAuth2Session(
-            self.config.client_id, 
-            self.web_app_client,
-            scope=self.scope, 
-            redirect_uri=self.config.redirect_uri,
-            
+        self.web_app_client = WebApplicationClient(
+            self.config.client_id, scope=self.scope
         )
 
-        auth_url, state = self.session.authorization_url(self.auth_url)
+        # Create an OAuth2 session for the OSF
+        async with OAuth2Session(
+            self.config.client_id,
+            self.web_app_client,
+            scope=self.scope,
+            redirect_uri=self.config.redirect_uri,
+        ) as session:
 
-        webbrowser.open(auth_url)
+            auth_url, state = session.authorization_url(self.auth_url)
 
-        token_future = asyncio.get_event_loop().create_future()
+            webbrowser.open(auth_url)
 
-        app = web.Application()
-        app.router.add_get("/", wrapped_future(token_future))
-        webserver_future = asyncio.wait_for(web._run_app(app, host="localhost", port=6767, print=lambda x: logger.info(x),handle_signals=False), self.config.timeout)
-        done, pending = await asyncio.wait([token_future, webserver_future], return_when=asyncio.FIRST_COMPLETED)
+            token_future = asyncio.get_event_loop().create_future()
 
-        for tf in done:
-            if tf == token_future:
-                path = tf.result()
-            else:
-                path = None
+            app = web.Application()
+            app.router.add_get("/", wrapped_future(token_future))
+            webserver_future = asyncio.wait_for(
+                web._run_app(
+                    app,
+                    host="localhost",
+                    port=6767,
+                    print=lambda x: logger.info(x),
+                    handle_signals=False,
+                ),
+                self.config.timeout,
+            )
+            done, pending = await asyncio.wait(
+                [token_future, webserver_future], return_when=asyncio.FIRST_COMPLETED
+            )
 
-        for task in pending:
-            task.cancel()
+            for tf in done:
+                if tf == token_future:
+                    path = tf.result()
+                else:
+                    path = None
 
-            try:
-                await task
-            except asyncio.CancelledError:
-                pass
+            for task in pending:
+                task.cancel()
 
-        if path:
-            return self.session.fetch_token(self.token_url, client_secret=self.config.client_secret, authorization_response=path, state=state)
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
+
+            if path:
+                return await session.fetch_token(
+                    self.token_url,
+                    client_secret=self.config.client_secret,
+                    authorization_response=path,
+                    state=state,
+                )
 
         return None

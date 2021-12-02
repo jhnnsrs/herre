@@ -95,7 +95,7 @@ class Herre:
                 self.config.authorization_grant_type
             )(self.config, fakts=self.fakts)
             token_dict = await self.grant.afetch_token(**kwargs)
-            print(token_dict)
+            logger.info(f"Grant fetched token {token_dict}")
             self.state = HerreState(
                 **token_dict, client_id=self.config.client_id, scopes=self.config.scopes
             )
@@ -143,8 +143,7 @@ class Herre:
         self.state = None
 
     async def arefresh(self):
-        assert self.grant, "We have never logged in"
-        return await self.grant.arefresh()
+        return await self.grant.alogin()
 
     def login(self, **kwargs):
         return koil(self.alogin(), **kwargs)
