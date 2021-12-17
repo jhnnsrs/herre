@@ -12,6 +12,9 @@ FILE_CLASSES = (
 
 
 class QueryVariable:
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
     @abstractmethod
     async def to_variable(self):
         raise NotImplementedError
