@@ -70,6 +70,7 @@ class Herre:
         super().__init__(*args, **kwargs)
 
     async def alogin(self, force_relogin=False, retry=0, **kwargs) -> HerreState:
+
         if retry > self.max_retries:
             raise Exception("Exceeded Login Retries")
         if not self.config:

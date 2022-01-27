@@ -78,6 +78,8 @@ class BaseWard(metaclass=WardMeta):
     id: str
     configClass = Config
 
+    shrinker_funcs = {}
+
     def __init__(
         self,
         *args,
@@ -114,12 +116,13 @@ class BaseWard(metaclass=WardMeta):
         """
         return None
 
-    async def arun(self, query: BaseQuery, variables: dict = {}):
-        assert isinstance(query, BaseQuery), "Query must be of type BaseQuery"
+    async def arun(self, query: str, variables: dict = {}):
         if not self.connected:
             await self.aconnect()
 
-        variables, files = await parse_variables(variables)
+        variables, files = await parse_variables(
+            variables, shrinker_funcs=self.shrinker_funcs, ward=self
+        )
 
         return await self.handle_run(query, variables, files)
 

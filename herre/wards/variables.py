@@ -3,6 +3,7 @@ import inspect
 import io
 from typing import AsyncGenerator, Dict, Tuple, Type, Any
 import aiohttp
+import xarray as xr
 
 FILE_CLASSES = (
     io.IOBase,
@@ -21,7 +22,10 @@ class QueryVariable:
 
 
 async def parse_variables(
-    variables: Dict, file_classes: Tuple[Type[Any], ...] = FILE_CLASSES
+    variables: Dict,
+    file_classes: Tuple[Type[Any], ...] = FILE_CLASSES,
+    shrinker_funcs={},
+    ward=None,
 ) -> Tuple[Dict, Dict]:
     files = {}
 
@@ -32,6 +36,7 @@ async def parse_variables(
         shunting the originals off to the side.
         """
         nonlocal files
+
         if isinstance(obj, list):
             nulled_obj = []
             for key, value in enumerate(obj):
@@ -53,6 +58,8 @@ async def parse_variables(
             return await obj.to_variable()
 
         else:
+            if obj.__class__ in shrinker_funcs:
+                return await shrinker_funcs[obj.__class__](obj, ward)
             # base case: pass through unchanged
             return obj
 

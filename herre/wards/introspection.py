@@ -5,7 +5,6 @@ from enum import Enum
 from typing import ForwardRef
 
 
-
 class TypeKind(str, Enum):
     SCALAR = "SCALAR"
     OBJECT = "OBJECT"
@@ -21,6 +20,7 @@ Type = ForwardRef("Type")
 InputValue = ForwardRef("InputValue")
 Field = ForwardRef("Field")
 
+
 class InputValue(BaseModel):
     name: Optional[str]
     description: Optional[str]
@@ -30,7 +30,7 @@ class InputValue(BaseModel):
 
 class Field(BaseModel):
     name: Optional[str]
-    description:  Optional[str]
+    description: Optional[str]
     args: Optional[List[InputValue]]
     type: Optional[Type]
     isDeprecated: Optional[bool]
@@ -42,10 +42,9 @@ class Type(BaseModel):
     description: Optional[str]
     name: Optional[str]
     fields: Optional[List[Field]]
-    interfaces:  Optional[List[Type]]
-    inputFields:  Optional[List[InputValue]]
+    interfaces: Optional[List[Type]]
+    inputFields: Optional[List[InputValue]]
     ofType: Optional[Type]
-
 
 
 Type.update_forward_refs()
@@ -56,3 +55,5 @@ Field.update_forward_refs()
 class Schema(BaseModel):
     types: Optional[List[Type]]
     queryType: Optional[Type]
+    mutationType: Optional[Type]
+    subscriptionType: Optional[Type]

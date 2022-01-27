@@ -1,6 +1,10 @@
 from abc import abstractproperty
+import asyncio
+from asyncio.tasks import create_task
 import json
 from typing import Any, Dict
+
+import websockets
 from herre.exceptions import TokenExpired
 from herre.wards.base import BaseQuery, BaseWard, WardException
 import aiohttp
@@ -36,7 +40,8 @@ class ParsedQuery(BaseQuery):
             self.has_variables = False
 
         if not self.m:
-            raise GQLException(f"Illformed request {self.query}")
+            pass
+            # raise GQLException(f"Illformed request {self.query}")
 
     def get_operation_name_for_datakey(self, key):
         # TODO: Make work
@@ -90,6 +95,21 @@ class GraphQLWardConfig(Config):
         return NotImplementedError("Please overwrite endpoint")
 
 
+class Link:
+    async def connect(self):
+        pass
+
+    async def arun(self, gql: ParsedQuery, variables: dict = {}, files: dict = {}):
+        pass
+
+    async def disconnect(self):
+        pass
+
+
+class TerminatingLink(Link):
+    pass
+
+
 class GraphQLWard(BaseWard):
     configClass = GraphQLWardConfig
     config: GraphQLWardConfig
@@ -106,14 +126,14 @@ class GraphQLWard(BaseWard):
         self.connected = False
 
     async def handle_run(
-        self, gql: ParsedQuery, variables: dict = {}, files: dict = {}, retry=0
+        self, query: str, variables: dict = {}, files: dict = {}, retry=0
     ):
         try:
             assert (
                 retry < self.max_retries
-            ), f"Retries Exceeded for Request {gql} with {variables}"
+            ), f"Retries Exceeded for Request {query} with {variables}"
 
-            payload = {"query": gql.query}
+            payload = {"query": query}
 
             if len(files.items()) > 0:
                 # We have to uload files
@@ -175,8 +195,78 @@ class GraphQLWard(BaseWard):
 
         except TokenExpired as e:
             await self.herre.arefresh()
-            return await self.run(gql, variables, retry=retry + 1)
+            return await self.run(query, variables, retry=retry + 1)
 
         except aiohttp.client_exceptions.ClientOSError as e:
             await self.adisconnect()
             raise GraphQLProtocolException("Ward is not reachable") from e
+
+
+class AiohttpLink(TerminatingLink):
+    def __init__(self, ward: GraphQLWard) -> None:
+        self.ward = ward
+        super().__init__()
+
+    async def connect(self):
+        self.async_session = aiohttp.ClientSession(headers=self.ward.herre.headers)
+
+    async def arun(self, gql: ParsedQuery, variables: dict = {}, files: dict = {}):
+        payload = {"query": gql.query}
+
+        if len(files.items()) > 0:
+            # We have to uload files
+
+            payload["variables"] = variables
+
+            data = aiohttp.FormData()
+
+            file_map = {str(i): [path] for i, path in enumerate(files)}
+            # Enumerate the file streams
+            # Will generate something like {'0': <_io.BufferedReader ...>}
+            file_streams = {str(i): files[path] for i, path in enumerate(files)}
+            operations_str = json.dumps(payload)
+
+            data.add_field(
+                "operations", operations_str, content_type="application/json"
+            )
+            file_map_str = json.dumps(file_map)
+            data.add_field("map", file_map_str, content_type="application/json")
+
+            for k, v in file_streams.items():
+                data.add_field(
+                    k,
+                    v,
+                    filename=getattr(v, "name", k),
+                )
+
+            post_args: Dict[str, Any] = {"data": data}
+
+        else:
+            payload["variables"] = variables
+            post_args = {"json": payload}
+
+        async with self.async_session.post(
+            self.ward.config.endpoint, **post_args
+        ) as resp:
+
+            if resp.status == 200:
+                result = await resp.json()
+                logger.debug(f"Received Reply {result}")
+
+                if "errors" in result:
+                    raise GraphQLQueryException(
+                        f"Ward {self.ward.config.endpoint}:" + str(result["errors"])
+                    )
+
+                return result["data"]
+
+            if resp.status == 403:
+                logger.error("Auth token is expired trying to refresh")
+                raise TokenExpired("Token Expired Error")
+
+            if resp.status == 400:
+                raise GraphQLProtocolException(await resp.json())
+
+            raise GraphQLProtocolException(
+                f"Unexpected statuscode {resp.status} {resp}"
+            )

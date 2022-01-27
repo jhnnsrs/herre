@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "herre"
-version = "0.1.59"
+version = "0.1.60"
 readme = "README.md"
 description = "The governing package for modules of the arnheim framework, it provides core features like wards, the event loop and authentication with an oauth provider"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
@@ -8,16 +8,16 @@ license = "CC BY-NC 3.0"
 packages = [{include = "herre"}]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.7"
 QtPy = "^1.11.1"
 rich = "^10.9.0"
 aiohttp = "^3.7.4"
-fakts = "^0.1.39"
 oauthlib = "^3.1.1"
+fakts = "0.1.40"
 
 [tool.poetry.extras]
-jupyter = ["jupyter"]
-pyqt = ["PyQt5","PyQtWebEngine"]
+windowed = ["PyQtWebEngine"]
+fakts = ["fakts"]
 
 
 [tool.poetry.dev-dependencies]
@@ -25,6 +25,7 @@ pytest = "^6.2.5"
 pytest-aiohttp = "^0.3.0"
 pytest-cov = "^3.0.0"
 black = "^21.12b0"
+tox = "^3.24.5"
 
 
 [build-system]
