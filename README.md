@@ -1,4 +1,4 @@
-# Herre
+# herre
 
 [![codecov](https://codecov.io/gh/jhnnsrs/herre/branch/master/graph/badge.svg?token=UGXEA2THBV)](https://codecov.io/gh/jhnnsrs/herre)
 [![PyPI version](https://badge.fury.io/py/herre.svg)](https://pypi.org/project/herre/)
