@@ -5,6 +5,7 @@ import aiohttp
 from pydantic.main import BaseModel
 import fakts
 from herre.config import HerreConfig
+from herre.grants.base import BaseGrant
 from herre.grants.code_server.app import AuthorizationCodeServerGrant
 from herre.grants.backend.app import BackendGrant
 from herre.grants.backend.app import BackendGrant
@@ -31,13 +32,11 @@ class HerreError(Exception):
 class Herre:
     def __init__(
         self,
+        grant: BaseGrant,
+        base_url: str,
         *args,
-        register=True,
-        config: HerreConfig = None,
-        fakts: Fakts = None,
         token_file="token.temp",
         userinfo_url="userinfo/",
-        granty_registry: GrantRegistry = None,
         max_retries=5,
         no_temp=False,
         **kwargs,
@@ -54,37 +53,33 @@ class Herre:
         Raises:
             HerreError: [description]
         """
-        self.config = config
         self.max_retries = max_retries
-        self.fakts: Fakts = fakts or get_current_fakts()
-        self.grant_registry = granty_registry or get_current_grant_registry()
+        self.base_url = base_url
         self.no_temp = no_temp
-        self.grant = None
+        self.grant = grant
         self.state: HerreState = None
-        self.token_file = (
-            f"{self.fakts.subapp}.{token_file}" if self.fakts.subapp else token_file
-        )
-        if register:
-            set_current_herre(self)
+        self.token_file = token_file
+        self.no_temp = no_temp
+        self.userinfo_url = userinfo_url
 
         super().__init__(*args, **kwargs)
+
+    async def aget_token(self):
+        if not self.state or not self.state.access_token:
+            await self.alogin()
+
+        return self.state.access_token
 
     async def alogin(self, force_relogin=False, retry=0, **kwargs) -> HerreState:
 
         if retry > self.max_retries:
             raise Exception("Exceeded Login Retries")
 
-        if not self.config:
-            if not self.fakts.loaded:
-                await self.fakts.aload()
-
-            self.config = await HerreConfig.from_fakts(fakts=self.fakts)
-
-        if not force_relogin and not self.config.no_temp and not self.no_temp:
+        if not force_relogin and not self.no_temp:
             try:
                 with shelve.open(self.token_file) as cfg:
                     client_id = cfg["client_id"]
-                    if client_id == self.config.client_id:
+                    if client_id == self.grant.client_id:
                         self.state = HerreState(**cfg["state"])
                     else:
                         logger.info("Omitting old token")
@@ -93,19 +88,15 @@ class Herre:
                 pass
 
         if not self.state:
-            self.grant = self.grant_registry.get_grant_for_type(
-                self.config.authorization_grant_type
-            )(self.config, fakts=self.fakts)
             token_dict = await self.grant.afetch_token(**kwargs)
             logger.info(f"Grant fetched token {token_dict}")
             self.state = HerreState(
-                **token_dict, client_id=self.config.client_id, scopes=self.config.scopes
+                **token_dict, client_id=self.grant.client_id, scopes=self.grant.scopes
             )
 
         try:
-            base_url = f'{"https" if self.config.secure else "http"}://{self.config.host}:{self.config.port}{self.config.subpath}/'
-            user_info_endpoint = base_url + "userinfo/"
-
+            base_url = self.base_url
+            user_info_endpoint = base_url + self.userinfo_url
             async with aiohttp.ClientSession(
                 headers={"Authorization": f"Bearer {self.state.access_token}"}
             ) as session:
@@ -119,7 +110,7 @@ class Herre:
                     except:
                         self.state.user = None
 
-                    if not self.config.no_temp:
+                    if not self.no_temp:
                         with shelve.open(self.token_file) as cfg:
                             cfg["client_id"] = self.state.client_id
                             cfg["state"] = self.state.dict()

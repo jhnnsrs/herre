@@ -33,8 +33,8 @@ client = Herre(
     grant=AuthorizationCode()
     host="p-tnagerl-lab1",
     port=8000,
-    client_id="APPLICATION_ID_FROM_ARNHEIM",
-    client_secret="APPLICATION_SECRET_FROM_ARNHEIM",
+    client_id="$YOUR_CLIENT_ID",
+    client_secret="$YOUR_CLIENT_SECRET",
     name="karl",
 )
 
