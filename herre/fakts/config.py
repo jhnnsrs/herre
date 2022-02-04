@@ -1,7 +1,6 @@
 from enum import Enum
-from typing import List, Optional
-
-from fakts import Fakts, get_current_fakts, Config
+from typing import Any, Dict, List, Optional
+from pydantic import BaseModel
 
 
 class GrantType(str, Enum):
@@ -12,14 +11,12 @@ class GrantType(str, Enum):
     AUTHORIZATION_CODE_SERVER = "AUTHORIZATION_CODE_SERVER"
 
 
-class HerreConfig(Config):
-    subpath: str = ""
-    secure: bool
-    host: str
-    port: int
+class HerreConfig(BaseModel):
+    base_url: str
     client_id: str
     client_secret: str
     authorization_grant_type: GrantType
+    grant_kwargs: Dict[str, Any] = {}
     scopes: List[str]
     redirect_uri: Optional[str]
     jupyter_sync: bool = False
@@ -27,6 +24,3 @@ class HerreConfig(Config):
     password: Optional[str]
     timeout: int = 500
     no_temp: bool = False
-
-    class Config:
-        group = "herre"
