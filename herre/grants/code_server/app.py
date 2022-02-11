@@ -11,7 +11,7 @@ from herre.grants.utils import build_authorize_url, build_token_url
 from herre.herre import Herre
 
 logger = logging.getLogger(__name__)
-REDIRECT_PORT = 6767
+REDIRECT_PORT = 6565
 
 
 def wrapped_future(future):
@@ -22,22 +22,9 @@ def wrapped_future(future):
     return web_token_response
 
 
-async def wait_for_server(app, host="localhost", port="6767", timeout=1):
-    try:
-        await asyncio.wait_for(
-            web._run_app(
-                app,
-                host="localhost",
-                port=6767,
-            ),
-            timeout,
-        )
-    except asyncio.TimeoutError:
-        return "no token"
-
-
 class AuthorizationCodeServerGrant(RefreshableGrant):
     refreshable = True
+    is_user_grant = True
 
     def __init__(
         self,
@@ -82,11 +69,13 @@ class AuthorizationCodeServerGrant(RefreshableGrant):
                 [token_future, webserver_future], return_when=asyncio.FIRST_COMPLETED
             )
 
+            print(done, pending)
+
             for tf in done:
                 if tf == token_future:
                     path = tf.result()
                 else:
-                    path = None
+                    raise tf.exception()
 
             for task in pending:
                 task.cancel()
@@ -96,6 +85,7 @@ class AuthorizationCodeServerGrant(RefreshableGrant):
                 except asyncio.CancelledError:
                     pass
 
+            print("MOINAOSINOINOIN", path)
             if path:
                 print(path)
 
@@ -106,4 +96,4 @@ class AuthorizationCodeServerGrant(RefreshableGrant):
                     state=state,
                 )
 
-        return None
+        raise Exception("Could not fetch token")

@@ -4,3 +4,7 @@ class HerreError(Exception):
 
 class NoHerreFound(HerreError):
     pass
+
+
+class LoginException(HerreError):
+    pass

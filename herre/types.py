@@ -8,6 +8,7 @@ class App(BaseModel):
 
 
 class User(BaseModel):
+    sub: str  # This is not optional as openid spec demands it
     username: Optional[str]
     email: Optional[str]
     first_name: Optional[str]

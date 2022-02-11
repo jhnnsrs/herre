@@ -19,9 +19,7 @@ class RetryException(GrantException):
 
 class BaseGrant(ABC):
     herre: Any
-    client_id: str
-    client_secret: str
-    scopes: List[str]
+    is_user_grant: bool
 
     @abstractmethod
     async def afetch_token(self, herre, **kwargs):

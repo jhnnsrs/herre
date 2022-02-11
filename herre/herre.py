@@ -1,6 +1,8 @@
+import asyncio
+from re import L
 from typing import Optional
 import aiohttp
-from herre.errors import NoHerreFound
+from herre.errors import LoginException, NoHerreFound
 from herre.grants.base import BaseGrant
 import os
 import logging
@@ -81,17 +83,26 @@ class Herre:
         register_global=True,
         **kwargs,
     ) -> None:
-        """Creates A Herre Client
+        """Initialize a new Herre instance.
+
+        Will initialize a Herre instance,
 
         Args:
-            config_path (str, optional): [description]. Defaults to "bergen.yaml".
-            username (str, optional): [description]. Defaults to None.
-            password (str, optional): [description]. Defaults to None.
+            grant (BaseGrant, optional): The Grant we use to retrieve tokens. Defaults to None.
+            base_url (str, optional): The Base Url for all requests (check your openid2 connect server). Defaults to "".
+            client_id (str, optional): [description]. Defaults to "".
+            client_secret (str, optional): [description]. Defaults to "".
+            scopes (list, optional): The  Defaults to ["introspection"].
+            token_path (str, optional): [description]. Defaults to "token".
+            authorize_path (str, optional): [description]. Defaults to "authorize".
+            refresh_path (str, optional): [description]. Defaults to "token".
+            append_trailing_slash (bool, optional): [description]. Defaults to True.
+            token_file (str, optional): [description]. Defaults to "token.temp".
+            userinfo_path (str, optional): [description]. Defaults to "userinfo".
+            max_retries (int, optional): [description]. Defaults to 1.
             allow_insecure (bool, optional): [description]. Defaults to False.
-            in_sync (bool, optional): Should we force an in_sync modus if an event loop is already running. Loop will be send to another thread. Defaults to True.
-
-        Raises:
-            HerreError: [description]
+            no_temp (bool, optional): [description]. Defaults to False.
+            register_global (bool, optional): [description]. Defaults to True.
         """
 
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "0" if allow_insecure else "1"
@@ -111,6 +122,7 @@ class Herre:
         self.append_trailing_slash = append_trailing_slash
         self.token_file = token_file
         self.no_temp = no_temp
+        self._lock = None
 
         self.state: HerreState = None
 
@@ -118,67 +130,106 @@ class Herre:
         if register_global:
             set_global_herre(self)
 
-    async def aget_token(self):
-        if not self.state or not self.state.access_token:
-            await self.alogin()
+    async def aget_token(self, auto_login: bool = True):
+        """Get an access token
+
+        This is a loop safe couroutine, that will return an access token if it is already available or
+        try to login depending on auto_login. THe checking and potential retrieving will happen
+        in a lock ensuring that not multiple requests are happening at the same time.
+
+        Args:
+            auto_login (bool, optional): Should we allow an automatic login. Defaults to True.
+
+        Returns:
+            str:  The access token
+        """
+        if not self._lock:
+            self._lock = asyncio.Lock()
+
+        async with self._lock:
+            if not self.state or not self.state.access_token:
+                await self.alogin()
 
         return self.state.access_token
 
-    async def alogin(self, force_relogin=False, retry=0, **kwargs) -> HerreState:
+    async def alogin(self, force_refresh=False, retry=0, **kwargs) -> HerreState:
+        """Login Function
 
-        if retry > self.max_retries:
-            raise Exception("Exceeded Login Retries")
+        Login is a compount function that will try to ensure a login following the following steps:
 
-        if not force_relogin and not self.no_temp:
+        1. Set the current state to none (if not already set)
+        2. Try to load the token from the token file (and check its validity)
+        3. If the token is not valid or force_refresh is true, try to refresh the token.
+        4. If the grant is a user grant (indicated on the grantclass) make a request to the userinfo endpoint and check update the state with user information
+        5. Returns the state
+
+        Args:
+            force_refresh (bool, optional): [description]. Defaults to False.
+            retry (int, optional): [description]. Defaults to 0.
+
+        Raises:
+            Exception: [description]
+            Exception: [description]
+
+        Returns:
+            HerreState: [description]
+        """
+
+        self.state = None
+
+        if not force_refresh and not self.no_temp:
             try:
                 with shelve.open(self.token_file) as cfg:
                     client_id = cfg["client_id"]
                     if client_id == self.client_id:
                         self.state = HerreState(**cfg["state"])
                     else:
-                        logger.info("Omitting old token")
+                        logger.info(
+                            "Ommiting token file as client_id does not match current client_id"
+                        )
 
             except Exception:
-                pass
+                logger.info("No token found")
 
         if not self.state:
             token_dict = await self.grant.afetch_token(self, **kwargs)
-            print(f"Grant fetched token {token_dict}")
+            # print(token_dict)
             self.state = HerreState(
                 **token_dict, client_id=self.client_id, scopes=self.requested_scopes
             )
 
-        try:
-            user_info_endpoint = build_userinfo_url(self)
-            async with aiohttp.ClientSession(
-                headers={"Authorization": f"Bearer {self.state.access_token}"}
-            ) as session:
-                async with session.get(user_info_endpoint) as resp:
-                    user_json = await resp.json()
-                    print(user_json)
-                    if "detail" in user_json:
-                        raise Exception(user_json["detail"])
+        if self.grant.is_user_grant:
+            try:
+                user_info_endpoint = build_userinfo_url(self)
+                async with aiohttp.ClientSession(
+                    headers={"Authorization": f"Bearer {self.state.access_token}"}
+                ) as session:
+                    async with session.get(user_info_endpoint) as resp:
+                        user_json = await resp.json()
+                        if "detail" in user_json:
+                            raise Exception(user_json["detail"])
 
-                    try:
-                        self.state.user = User(**user_json)
-                    except:
-                        self.state.user = None
+                        try:
+                            self.state.user = User(**user_json)
+                        except:
+                            self.state.user = None
 
-                    if not self.no_temp:
-                        with shelve.open(self.token_file) as cfg:
-                            cfg["client_id"] = self.state.client_id
-                            cfg["state"] = self.state.dict()
+                        if not self.no_temp:
+                            with shelve.open(self.token_file) as cfg:
+                                cfg["client_id"] = self.state.client_id
+                                cfg["state"] = self.state.dict()
 
-        except Exception as e:
-            logger.error(f"Token Invalid {e}")
-            self.state = None
-            await self.alogin(force_relogin=True, retry=retry + 1, **kwargs)
+            except Exception as e:
+                if retry > self.max_retries:
+                    raise LoginException("Exceeded Login Retries") from e
+                await self.alogin(force_relogin=True, retry=retry + 1, **kwargs)
+
+        else:
+            self.state.user = None
 
         return self.state
 
     async def alogout(self):
-        if self.grant:
-            return await self.grant.alogout()
 
         try:
             with shelve.open(self.token_file) as cfg:
@@ -189,17 +240,11 @@ class Herre:
 
         self.state = None
 
-    async def arefresh(self):
-        return await self.grant.alogin()
-
     def login(self, **kwargs):
         return koil(self.alogin(), **kwargs)
 
     def logout(self, **kwargs):
         return koil(self.alogout(), **kwargs)
-
-    def refresh(self):
-        return koil(self.arefresh())
 
     @property
     def logged_in(self):

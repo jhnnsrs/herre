@@ -10,6 +10,7 @@ from herre.herre import Herre
 
 class BackendGrant(RefreshableGrant):
     refreshable = True
+    is_user_grant = False
 
     async def afetch_token(self, herre: Herre, **kwargs):
         auth_client = BackendApplicationClient(

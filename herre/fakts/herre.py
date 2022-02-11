@@ -5,8 +5,14 @@ from herre.fakts.registry import GrantRegistry, get_current_grant_registry
 
 
 class FaktsHerre(Herre):
-
-    def __init__(self, *args, fakts: Fakts = None, grant_registry: GrantRegistry = None, fakts_key="herre", **kwargs) -> None:
+    def __init__(
+        self,
+        *args,
+        fakts: Fakts = None,
+        grant_registry: GrantRegistry = None,
+        fakts_key="herre",
+        **kwargs
+    ) -> None:
         super().__init__(*args, **kwargs)
         self._grant_registry = grant_registry or get_current_grant_registry()
         self._fakts = fakts or get_current_fakts()
@@ -21,7 +27,6 @@ class FaktsHerre(Herre):
         self.grant = self.grant or self._grant_registry.get_grant_for_type(
             config.authorization_grant_type
         )(**config.grant_kwargs)
-        print(self.grant)
 
         self.configured = True
         self.config = config
