@@ -24,3 +24,4 @@ class HerreConfig(BaseModel):
     password: Optional[str]
     timeout: int = 500
     no_temp: bool = False
+    token_file: Optional[str] = "token.temp"

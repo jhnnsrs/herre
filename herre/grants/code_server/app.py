@@ -48,7 +48,6 @@ class AuthorizationCodeServerGrant(RefreshableGrant):
         ) as session:
 
             auth_url, state = session.authorization_url(build_authorize_url(herre))
-            print(auth_url)
             webbrowser.open(auth_url)
 
             token_future = asyncio.get_event_loop().create_future()
@@ -69,8 +68,6 @@ class AuthorizationCodeServerGrant(RefreshableGrant):
                 [token_future, webserver_future], return_when=asyncio.FIRST_COMPLETED
             )
 
-            print(done, pending)
-
             for tf in done:
                 if tf == token_future:
                     path = tf.result()
@@ -85,9 +82,7 @@ class AuthorizationCodeServerGrant(RefreshableGrant):
                 except asyncio.CancelledError:
                     pass
 
-            print("MOINAOSINOINOIN", path)
             if path:
-                print(path)
 
                 return await session.fetch_token(
                     build_token_url(herre),

@@ -18,7 +18,6 @@ class BackendGrant(RefreshableGrant):
         )
 
         async with OAuth2Session(client=auth_client, scope=herre.scope) as session:
-            print(build_token_url(herre))
 
             token = await session.fetch_token(
                 token_url=build_token_url(herre),

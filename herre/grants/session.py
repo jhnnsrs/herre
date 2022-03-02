@@ -358,7 +358,6 @@ class OAuth2Session(aiohttp.ClientSession):
             log.debug("Response headers were %s and content %s.", resp.headers, text)
             (resp,) = self._invoke_hooks("access_token_response", resp)
 
-        print(text)
         self._client.parse_request_body_response(text, scope=self.scope)
         self.token = self._client.token
         log.debug("Obtained token %s.", self.token)

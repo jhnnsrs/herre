@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List, Optional
 
-from fakts import Fakts, get_current_fakts, Config
+from fakts import Config
 
 
 class GrantType(str, Enum):

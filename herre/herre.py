@@ -71,9 +71,9 @@ class Herre:
         client_id: str = "",
         client_secret: str = "",
         scopes=["introspection"],
-        token_path="token",
         authorize_path="authorize",
         refresh_path="token",
+        token_path="token",
         append_trailing_slash=True,
         token_file="token.temp",
         userinfo_path="userinfo",
@@ -116,11 +116,11 @@ class Herre:
         self.grant = grant
         self.base_url = base_url
         self.auth_path = authorize_path
-        self.token_path = token_path
         self.refresh_path = refresh_path
         self.userinfo_path = userinfo_path
         self.append_trailing_slash = append_trailing_slash
         self.token_file = token_file
+        self.token_path = token_path
         self.no_temp = no_temp
         self._lock = None
 
@@ -193,7 +193,6 @@ class Herre:
 
         if not self.state:
             token_dict = await self.grant.afetch_token(self, **kwargs)
-            # print(token_dict)
             self.state = HerreState(
                 **token_dict, client_id=self.client_id, scopes=self.requested_scopes
             )
@@ -222,7 +221,7 @@ class Herre:
             except Exception as e:
                 if retry > self.max_retries:
                     raise LoginException("Exceeded Login Retries") from e
-                await self.alogin(force_relogin=True, retry=retry + 1, **kwargs)
+                await self.alogin(force_refresh=True, retry=retry + 1, **kwargs)
 
         else:
             self.state.user = None
@@ -240,8 +239,14 @@ class Herre:
 
         self.state = None
 
-    def login(self, **kwargs):
-        return koil(self.alogin(), **kwargs)
+    def login(self, force_refresh=False, retry=0, **kwargs):
+        return koil(
+            self.alogin(
+                force_refresh=force_refresh,
+                retry=retry,
+            ),
+            **kwargs,
+        )
 
     def logout(self, **kwargs):
         return koil(self.alogout(), **kwargs)
