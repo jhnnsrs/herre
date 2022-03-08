@@ -2,7 +2,7 @@ import asyncio
 from re import L
 from typing import Optional
 import aiohttp
-from herre.errors import LoginException, NoHerreFound
+from herre.errors import LoginException
 from herre.grants.base import BaseGrant
 import os
 import logging
@@ -10,56 +10,17 @@ from herre.types import HerreState, User
 import shelve
 import contextvars
 import os
-from koil.loop import koil
+from koil import koilable
 
 
-current_herre = contextvars.ContextVar("current_herre", default=None)
+current_herre = contextvars.ContextVar("current_herre")
 GLOBAL_HERRE = None
 
 
 logger = logging.getLogger(__name__)
 
 
-def set_current_herre(herre, set_global=True):
-    global GLOBAL_HERRE
-    current_herre.set(herre)
-    if set_global:
-        GLOBAL_HERRE = herre
-
-
-def set_global_herre(herre):
-    global GLOBAL_HERRE
-    GLOBAL_HERRE = herre
-
-
-def get_current_herre(allow_global=True):
-    global GLOBAL_HERRE
-    herre = current_herre.get()
-
-    if not herre:
-        if not allow_global:
-            raise NoHerreFound(
-                "No current herre found and global herre are not allowed"
-            )
-        if not GLOBAL_HERRE:
-            if os.getenv("HERRE_ALLOW_FAKTS_GLOBAL", "True") == "True":
-                try:
-                    from herre.fakts import FaktsHerre
-
-                    GLOBAL_HERRE = FaktsHerre()
-                    return GLOBAL_HERRE
-                except ImportError as e:
-                    raise NoHerreFound("Error creating Fakts Herre") from e
-            else:
-                raise NoHerreFound(
-                    "No current herre found and and no global herre found"
-                )
-
-        return GLOBAL_HERRE
-
-    return herre
-
-
+@koilable(add_connectors=True)
 class Herre:
     state: Optional[HerreState]
 
@@ -106,7 +67,6 @@ class Herre:
         """
 
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "0" if allow_insecure else "1"
-
         self.max_retries = max_retries
         self.base_url = base_url  # is defered
         self.client_id = client_id
@@ -125,10 +85,7 @@ class Herre:
         self._lock = None
 
         self.state: HerreState = None
-
         super().__init__(*args, **kwargs)
-        if register_global:
-            set_global_herre(self)
 
     async def aget_token(self, auto_login: bool = True):
         """Get an access token
@@ -271,6 +228,13 @@ class Herre:
     def headers(self):
         assert self.state, "We are not yet logged in"
         return {"Authorization": f"Bearer {self.state.access_token}"}
+
+    async def __aenter__(self):
+        current_herre.set(self)
+        return self
+
+    async def __aexit__(self, *args, **kwargs):
+        current_herre.set(None)
 
 
 def build_userinfo_url(herre: Herre):

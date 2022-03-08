@@ -1,1 +1,1 @@
-from .herre import Herre, get_current_herre
+from .herre import Herre, current_herre

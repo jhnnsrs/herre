@@ -1,7 +1,37 @@
+from fakts.config.base import Config
 from fakts.fakts import Fakts, current_fakts
 from herre.herre import Herre
-from herre.fakts.config import HerreConfig
 from herre.fakts.registry import GrantRegistry, get_current_grant_registry
+from enum import Enum
+from typing import Any, Dict, List, Optional
+from pydantic import BaseModel
+
+
+class GrantType(str, Enum):
+    IMPLICIT = "IMPLICIT"
+    PASSWORD = "PASSWORD"
+    CLIENT_CREDENTIALS = "CLIENT_CREDENTIALS"
+    AUTHORIZATION_CODE = "AUTHORIZATION_CODE"
+    AUTHORIZATION_CODE_SERVER = "AUTHORIZATION_CODE_SERVER"
+
+
+class HerreConfig(Config):
+    base_url: str
+    client_id: str
+    client_secret: str
+    authorization_grant_type: GrantType
+    grant_kwargs: Dict[str, Any] = {}
+    scopes: List[str]
+    redirect_uri: Optional[str]
+    jupyter_sync: bool = False
+    username: Optional[str]
+    password: Optional[str]
+    timeout: int = 500
+    no_temp: bool = False
+    token_file: Optional[str] = "token.temp"
+
+    class Config:
+        group: str = "herre"
 
 
 class FaktsHerre(Herre):
@@ -12,15 +42,16 @@ class FaktsHerre(Herre):
         grant_registry: GrantRegistry = None,
         fakts_key="herre",
         token_file=None,
-        **kwargs
+        **kwargs,
     ) -> None:
         super().__init__(*args, token_file=token_file, **kwargs)
-        self._grant_registry = grant_registry or get_current_grant_registry()
-        self._fakts = fakts or current_fakts.get()
+        self.fakts = fakts
         self.config = None
         self._fakts_key = fakts_key
+        self._grant_registry = grant_registry
 
-    def configure(self, config: HerreConfig) -> None:
+    def configure(self, config: HerreConfig, fakts: Fakts) -> None:
+        self.token_file = f"{fakts.subapp}.token.temp"
         self.base_url = config.base_url
         self.client_id = self.client_id or config.client_id
         self.client_secret = self.client_secret or config.client_secret
@@ -36,7 +67,9 @@ class FaktsHerre(Herre):
     async def alogin(self, **kwargs):
 
         if not self.config:
-            self.fakts = await self._fakts.aget(self._fakts_key)
-            self.configure(HerreConfig(**self.fakts))
+            fakts = self.fakts or current_fakts.get()
+            self._grant_registry = self._grant_registry or get_current_grant_registry()
+            config = await HerreConfig.from_fakts(fakts)
+            self.configure(config, fakts)
 
         return await super().alogin(**kwargs)

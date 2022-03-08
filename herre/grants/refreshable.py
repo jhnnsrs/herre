@@ -6,6 +6,9 @@ from herre.herre import Herre
 class RefreshableGrant:
     type = None
 
+    def __init__(self, **kwargs) -> None:
+        pass
+
     @abstractmethod
     async def afetch_token(self, herre: Herre):
         raise NotImplementedError()
@@ -28,5 +31,3 @@ class RefreshableGrant:
                 ), "Returned refreshed token does not have an access_token"
                 if "refresh_token" in self.token:
                     self.can_refresh = True
-
-    
