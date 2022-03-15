@@ -1,6 +1,6 @@
 from typing import Dict, Type
 from herre.grants.base import BaseGrant
-from herre.config import GrantType
+from herre.types import GrantType
 import logging
 
 
@@ -8,8 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 class GrantRegistry:
-
-    def __init__(self, register_defaults= True) -> None:
+    def __init__(self, register_defaults=True) -> None:
         self.registeredGrants: Dict[str, BaseGrant] = {}
         if register_defaults:
             self.register_defaults()
@@ -21,7 +20,6 @@ class GrantRegistry:
         self.register_grant(GrantType.AUTHORIZATION_CODE, AuthorizationCodeServerGrant)
         self.register_grant(GrantType.CLIENT_CREDENTIALS, BackendGrant)
 
-
     def register_grant(self, type: GrantType, grant: Type[BaseGrant]):
         self.registeredGrants[type] = grant
 
@@ -30,19 +28,21 @@ class GrantRegistry:
 
 
 def register_grant(type: GrantType):
-    def rea_decorator(grant):
-        assert hasattr(grant, "afetchtoken"), "A grant must specify a afetchtoken method"
+    def real_decorator(grant):
+        assert hasattr(
+            grant, "afetchtoken"
+        ), "A grant must specify a afetchtoken method"
         logger.info(f"Registering Grant {grant} for {type}")
-        get_current_grant_registry().register_grant(type, grant)
+        get_default_grant_registry().register_grant(type, grant)
         return grant
 
-    return rea_decorator
+    return real_decorator
 
 
 GRANT_REGISTRY = None
 
 
-def get_current_grant_registry(with_defaults=True):
+def get_default_grant_registry():
     global GRANT_REGISTRY
     if not GRANT_REGISTRY:
         GRANT_REGISTRY = GrantRegistry()

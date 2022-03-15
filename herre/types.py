@@ -1,5 +1,14 @@
+from enum import Enum
 from typing import List, Optional
 from pydantic import BaseModel
+
+
+class GrantType(str, Enum):
+    IMPLICIT = "IMPLICIT"
+    PASSWORD = "PASSWORD"
+    CLIENT_CREDENTIALS = "CLIENT_CREDENTIALS"
+    AUTHORIZATION_CODE = "AUTHORIZATION_CODE"
+    AUTHORIZATION_CODE_SERVER = "AUTHORIZATION_CODE_SERVER"
 
 
 class App(BaseModel):
@@ -15,9 +24,14 @@ class User(BaseModel):
     last_name: Optional[str]
 
 
-class HerreState(BaseModel):
-    user: Optional[User]
-    scopes: List[str]
-    client_id: str
+class Token(BaseModel):
     access_token: str
+    scope: Optional[List[str]]
     refresh_token: Optional[str]
+    expires_in: Optional[int]
+    expires_at: Optional[int]
+    token_type: Optional[str]
+
+
+class HerreState(BaseModel):
+    logged_in: bool = False

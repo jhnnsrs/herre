@@ -1,23 +1,23 @@
 from abc import ABC, abstractmethod
+from herre.grants.utils import build_refresh_url
+from herre.types import Token
 import aiohttp
+from herre.grants.base import BaseGrant
 from herre.herre import Herre
 
 
-class RefreshableGrant:
+class Refreshable:
     type = None
-
-    def __init__(self, **kwargs) -> None:
-        pass
 
     @abstractmethod
     async def afetch_token(self, herre: Herre):
         raise NotImplementedError()
 
-    async def arefresh(self, herre: Herre):
-        assert "refresh_token" in self.token, "Token had not refresh-token attached"
+    async def arefresh(self, herre: Herre, token: Token):
+        assert token.refresh_token, "Token had not refresh-token attached"
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                herre.refresh_url,
+                build_refresh_url(herre),
                 data={
                     "grant_type": "refresh_token",
                     "refresh_token": self.token["refresh_token"],

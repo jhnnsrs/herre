@@ -4,15 +4,9 @@ from herre.herre import Herre
 from herre.fakts.registry import GrantRegistry, get_current_grant_registry
 from enum import Enum
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-
-class GrantType(str, Enum):
-    IMPLICIT = "IMPLICIT"
-    PASSWORD = "PASSWORD"
-    CLIENT_CREDENTIALS = "CLIENT_CREDENTIALS"
-    AUTHORIZATION_CODE = "AUTHORIZATION_CODE"
-    AUTHORIZATION_CODE_SERVER = "AUTHORIZATION_CODE_SERVER"
+from herre.types import GrantType
 
 
 class HerreConfig(Config):
@@ -35,20 +29,7 @@ class HerreConfig(Config):
 
 
 class FaktsHerre(Herre):
-    def __init__(
-        self,
-        *args,
-        fakts: Fakts = None,
-        grant_registry: GrantRegistry = None,
-        fakts_key="herre",
-        token_file=None,
-        **kwargs,
-    ) -> None:
-        super().__init__(*args, token_file=token_file, **kwargs)
-        self.fakts = fakts
-        self.config = None
-        self._fakts_key = fakts_key
-        self._grant_registry = grant_registry
+    grant_registry: GrantRegistry = Field(default_factory=get_current_grant_registry)
 
     def configure(self, config: HerreConfig, fakts: Fakts) -> None:
         self.token_file = f"{fakts.subapp}.token.temp"
@@ -64,12 +45,11 @@ class FaktsHerre(Herre):
         self.configured = True
         self.config = config
 
-    async def alogin(self, **kwargs):
+    async def __aenter__(self, **kwargs):
 
-        if not self.config:
-            fakts = self.fakts or current_fakts.get()
-            self._grant_registry = self._grant_registry or get_current_grant_registry()
-            config = await HerreConfig.from_fakts(fakts)
-            self.configure(config, fakts)
+        fakts = current_fakts.get()
+        self._grant_registry = self._grant_registry
+        config = await HerreConfig.from_fakts(fakts)
+        self.configure(config, fakts)
 
         return await super().alogin(**kwargs)

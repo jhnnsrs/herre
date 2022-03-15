@@ -1,17 +1,18 @@
-from herre.config import GrantType
-from herre.grants.refreshable import RefreshableGrant
+from herre.grants.base import BaseGrant
+from herre.grants.openid import OpenIdUser
+from herre.grants.refreshable import Refreshable
 from oauthlib.oauth2 import WebApplicationClient
 from herre.grants.session import OAuth2Session
+from herre.types import Token, User
 import webbrowser
 from aiohttp import web
 import asyncio
 import logging
-from herre.grants.registry import register_grant
 from herre.grants.utils import build_authorize_url, build_token_url
 from herre.herre import Herre
 
 logger = logging.getLogger(__name__)
-REDIRECT_PORT = 6565
+REDIRECT_PORT = 6767
 
 
 def wrapped_future(future):
@@ -22,10 +23,7 @@ def wrapped_future(future):
     return web_token_response
 
 
-class AuthorizationCodeServerGrant(RefreshableGrant):
-    refreshable = True
-    is_user_grant = True
-
+class AuthorizationCodeServerGrant(BaseGrant, Refreshable, OpenIdUser):
     def __init__(
         self,
         redirect_port=REDIRECT_PORT,
@@ -35,21 +33,22 @@ class AuthorizationCodeServerGrant(RefreshableGrant):
         self.redirect_timeout = redirect_timeout
         self.redirect_uri = f"http://localhost:{redirect_port}/"
 
-    async def afetch_token(self, herre: Herre):
+    async def afetch_token(self, herre: Herre) -> Token:
 
-        web_app_client = WebApplicationClient(herre.client_id, scope=herre.scope)
+        web_app_client = WebApplicationClient(
+            herre.client_id, scope=herre.scope_delimiter.join(herre.scopes + ["openid"])
+        )
 
         # Create an OAuth2 session for the OSF
         async with OAuth2Session(
             herre.client_id,
             web_app_client,
-            scope=herre.scope,
+            scope=herre.scope_delimiter.join(herre.scopes + ["openid"]),
             redirect_uri=self.redirect_uri,
         ) as session:
 
             auth_url, state = session.authorization_url(build_authorize_url(herre))
-            webbrowser.open(auth_url)
-
+            print(auth_url)
             token_future = asyncio.get_event_loop().create_future()
 
             app = web.Application()
@@ -64,6 +63,8 @@ class AuthorizationCodeServerGrant(RefreshableGrant):
                 ),
                 self.redirect_timeout,
             )
+
+            webbrowser.open(auth_url)
             done, pending = await asyncio.wait(
                 [token_future, webserver_future], return_when=asyncio.FIRST_COMPLETED
             )
@@ -83,12 +84,16 @@ class AuthorizationCodeServerGrant(RefreshableGrant):
                     pass
 
             if path:
+                print(path)
 
-                return await session.fetch_token(
+                token_dict = await session.fetch_token(
                     build_token_url(herre),
                     client_secret=herre.client_secret,
                     authorization_response=path,
                     state=state,
                 )
+
+                print(token_dict)
+                return Token(**token_dict)
 
         raise Exception("Could not fetch token")
