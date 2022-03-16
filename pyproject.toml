@@ -2,7 +2,7 @@
 name = "herre"
 version = "0.1.67"
 readme = "README.md"
-description = "The governing package for modules of the arnheim framework, it provides core features like wards, the event loop and authentication with an oauth provider"
+description = "openid connect tailord for pyqt and async environments"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
 license = "CC BY-NC 3.0"
 packages = [{include = "herre"}]
@@ -15,7 +15,7 @@ aiohttp = "^3.7.4"
 oauthlib = "^3.1.1"
 fakts = "0.1.40"
 pydantic = "^1.9.0"
-koil = "0.1.101"
+koil = "0.1.103"
 
 [tool.poetry.extras]
 windowed = ["PyQtWebEngine"]
@@ -28,6 +28,9 @@ pytest-aiohttp = "^0.3.0"
 pytest-cov = "^3.0.0"
 black = "^21.12b0"
 tox = "^3.24.5"
+pytest-qt = "^4.0.2"
+PyQtWebEngine = "^5.15.5"
+PyQt5 = "^5.15.6"
 
 
 [build-system]

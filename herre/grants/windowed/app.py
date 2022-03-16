@@ -14,22 +14,22 @@ from oauthlib.oauth2 import WebApplicationClient
 
 
 class LoginWrapper(QWebEngineView):
-    fragment_emit = QtCore.Signal(object)
-
     def __init__(self, redirect_uri, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.name = self.page()
         self.redirect_uri = redirect_uri
         self.urlChanged.connect(self._interceptUrl)
 
+    def wait_for_redirect(self, auth_url, future):
+        self.setUrl(QtCore.QUrl(auth_url))
+        self.future = future
+
     def _interceptUrl(self, url):
         url_string = bytes(url.toEncoded()).decode()
         if url_string.startswith(self.redirect_uri):
-            self.fragment_emit.emit(url_string)
-            self.close()
-
-    def emit_auth(self, name, email):
-        self.fragment_emit.emit({"name": name, "email": email})
+            if self.future:
+                self.future.resolve(url_string)
+                self.close()
 
 
 class WindowedGrant(BaseGrant, QtWidgets.QWidget, Refreshable, OpenIdUser):
@@ -49,16 +49,11 @@ class WindowedGrant(BaseGrant, QtWidgets.QWidget, Refreshable, OpenIdUser):
         self.redirect_uri = f"http://localhost:{redirect_port}/"
 
         self.login_wrapper = LoginWrapper(self.redirect_uri)
-        self.login_wrapper.fragment_emit.connect(self.on_fragment_emitted)
 
     def show(self, future: QtFuture, auth_url):
-        self.login_wrapper.setUrl(QtCore.QUrl(auth_url))
-        self.login_wrapper.show()
         self.login_future = future
-
-    def on_fragment_emitted(self, fragment):
-        print(f"Fragment emitted: {fragment}")
-        self.login_future.resolve(fragment)
+        self.login_wrapper.wait_for_redirect(auth_url, future)
+        self.login_wrapper.show()
 
     async def afetch_token(self, herre: Herre) -> Token:
         print("We are binding to a future")

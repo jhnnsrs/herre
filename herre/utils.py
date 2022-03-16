@@ -4,6 +4,9 @@ from aiohttp import web
 import asyncio
 import webbrowser
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class RedirectError(Exception):
@@ -28,8 +31,6 @@ async def wait_for_redirect(
     handle_signals=False,
 ):
 
-    webbrowser.open(starturl)
-
     token_future = asyncio.get_event_loop().create_future()
 
     app = web.Application()
@@ -41,11 +42,13 @@ async def wait_for_redirect(
             app,
             host=redirect_host,
             port=redirect_port,
-            print=print_function,
+            print=lambda x: logger.info(x),
             handle_signals=handle_signals,
         ),
         timeout,
     )
+
+    webbrowser.open(starturl)
     done, pending = await asyncio.wait(
         [token_future, webserver_future], return_when=asyncio.FIRST_COMPLETED
     )
@@ -65,5 +68,6 @@ async def wait_for_redirect(
             pass
 
     if not redirect_qs:
-        raise RedirectError("No redirect Queryset provided")
+        raise RedirectError("No redirect path provided")
+
     return redirect_qs

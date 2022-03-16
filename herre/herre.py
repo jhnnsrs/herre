@@ -13,6 +13,7 @@ import shelve
 import contextvars
 import os
 from koil import koilable, Koil
+from koil.composition import KoiledModel
 from koil.helpers import unkoil
 
 current_herre = contextvars.ContextVar("current_herre")
@@ -20,8 +21,7 @@ current_herre = contextvars.ContextVar("current_herre")
 logger = logging.getLogger(__name__)
 
 
-@koilable(fieldname="koil", add_connectors=True)
-class Herre(BaseModel):
+class Herre(KoiledModel):
     grant: Optional[BaseGrant] = None
     base_url: str = ""
     client_id: str = ""
@@ -36,9 +36,11 @@ class Herre(BaseModel):
     max_retries: int = 1
     allow_insecure: bool = False
     scope_delimiter: str = " "
-    no_temp: bool = False
 
-    koil: Optional[Koil] = None
+    login_on_enter: bool = False
+    logout_on_exit: bool = False
+
+    no_temp: bool = False
 
     _lock: asyncio.Lock = None
 
@@ -176,14 +178,19 @@ class Herre(BaseModel):
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "0" if self.allow_insecure else "1"
         self._lock = asyncio.Lock()
         current_herre.set(self)
+        if self.login_on_enter:
+            await self.alogin()
         return self
 
     async def __aexit__(self, *args, **kwargs):
+        if self.logout_on_exit:
+            await self.alogout()
         current_herre.set(None)
 
     class Config:
         arbitrary_types_allowed = True
         underscore_attrs_are_private = True
+        extra = "forbid"
 
 
 def build_userinfo_url(herre: Herre):

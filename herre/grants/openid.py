@@ -10,10 +10,6 @@ from herre.herre import Herre, build_userinfo_url
 class OpenIdUser:
     type = None
 
-    @abstractmethod
-    async def afetch_token(self, herre: Herre):
-        raise NotImplementedError()
-
     async def afetch_user(self, herre: Herre, token: Token) -> User:
         async with aiohttp.ClientSession(
             headers={"Authorization": f"Bearer {token.access_token}"}

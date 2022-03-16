@@ -10,17 +10,10 @@ import asyncio
 import logging
 from herre.grants.utils import build_authorize_url, build_token_url
 from herre.herre import Herre
+from herre.utils import wait_for_redirect
 
 logger = logging.getLogger(__name__)
 REDIRECT_PORT = 6767
-
-
-def wrapped_future(future):
-    async def web_token_response(request):
-        future.set_result(request.path_qs)
-        return web.Response(text="You can close me now !")
-
-    return web_token_response
 
 
 class AuthorizationCodeServerGrant(BaseGrant, Refreshable, OpenIdUser):
@@ -48,44 +41,10 @@ class AuthorizationCodeServerGrant(BaseGrant, Refreshable, OpenIdUser):
         ) as session:
 
             auth_url, state = session.authorization_url(build_authorize_url(herre))
-            print(auth_url)
-            token_future = asyncio.get_event_loop().create_future()
 
-            app = web.Application()
-            app.router.add_get("/", wrapped_future(token_future))
-            webserver_future = asyncio.wait_for(
-                web._run_app(
-                    app,
-                    host="localhost",
-                    port=self.redirect_port,
-                    print=lambda x: logger.info(x),
-                    handle_signals=False,
-                ),
-                self.redirect_timeout,
-            )
-
-            webbrowser.open(auth_url)
-            done, pending = await asyncio.wait(
-                [token_future, webserver_future], return_when=asyncio.FIRST_COMPLETED
-            )
-
-            for tf in done:
-                if tf == token_future:
-                    path = tf.result()
-                else:
-                    raise tf.exception()
-
-            for task in pending:
-                task.cancel()
-
-                try:
-                    await task
-                except asyncio.CancelledError:
-                    pass
+            path = await self.get_path_from_redirect(auth_url)
 
             if path:
-                print(path)
-
                 token_dict = await session.fetch_token(
                     build_token_url(herre),
                     client_secret=herre.client_secret,
@@ -97,3 +56,8 @@ class AuthorizationCodeServerGrant(BaseGrant, Refreshable, OpenIdUser):
                 return Token(**token_dict)
 
         raise Exception("Could not fetch token")
+
+    async def get_path_from_redirect(self, auth_url):
+        return await wait_for_redirect(
+            auth_url, redirect_host="localhost", redirect_port=self.redirect_port
+        )

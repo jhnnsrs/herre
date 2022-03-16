@@ -1,7 +1,10 @@
 from fakts.config.base import Config
 from fakts.fakts import Fakts, current_fakts
 from herre.herre import Herre
-from herre.fakts.registry import GrantRegistry, get_current_grant_registry
+from herre.fakts.registry import (
+    GrantRegistry,
+    get_default_grant_registry,
+)
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
@@ -29,7 +32,7 @@ class HerreConfig(Config):
 
 
 class FaktsHerre(Herre):
-    grant_registry: GrantRegistry = Field(default_factory=get_current_grant_registry)
+    grant_registry: GrantRegistry = Field(default_factory=get_default_grant_registry)
 
     def configure(self, config: HerreConfig, fakts: Fakts) -> None:
         self.token_file = f"{fakts.subapp}.token.temp"
@@ -38,18 +41,13 @@ class FaktsHerre(Herre):
         self.client_secret = self.client_secret or config.client_secret
         self.token_file = self.token_file or config.token_file
 
-        self.grant = self.grant or self._grant_registry.get_grant_for_type(
+        self.grant = self.grant or self.grant_registry.get_grant_for_type(
             config.authorization_grant_type
         )(**config.grant_kwargs)
 
-        self.configured = True
-        self.config = config
-
     async def __aenter__(self, **kwargs):
-
         fakts = current_fakts.get()
-        self._grant_registry = self._grant_registry
         config = await HerreConfig.from_fakts(fakts)
         self.configure(config, fakts)
 
-        return await super().alogin(**kwargs)
+        return await super().__aenter__(**kwargs)
