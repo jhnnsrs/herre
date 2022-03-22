@@ -7,15 +7,15 @@ from herre.fakts.registry import (
 )
 from enum import Enum
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from herre.types import GrantType
 
 
 class HerreConfig(Config):
     base_url: str
-    client_id: str
-    client_secret: str
+    client_id: SecretStr
+    client_secret: SecretStr
     authorization_grant_type: GrantType
     grant_kwargs: Dict[str, Any] = {}
     scopes: List[str]

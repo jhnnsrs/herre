@@ -21,8 +21,8 @@ class Refreshable:
                 data={
                     "grant_type": "refresh_token",
                     "refresh_token": self.token["refresh_token"],
-                    "client_id": herre.client_id,
-                    "client_secret": herre.client_secret,
+                    "client_id": herre.client_id.get_secret_value(),
+                    "client_secret": herre.client_secret.get_secret_value(),
                 },
             ) as resp:
                 self.token = await resp.json()

@@ -14,8 +14,6 @@ class OpenIdUser:
         ) as session:
             async with session.get(build_userinfo_url(herre)) as resp:
 
-                print(token.access_token)
-                print(build_userinfo_url(herre))
                 user_json = await resp.json()
                 if "detail" in user_json:
                     raise NoUserException(user_json["detail"])

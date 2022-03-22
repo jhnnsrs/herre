@@ -1,3 +1,4 @@
+from distutils.command.config import config
 from pydantic import Field
 from herre.grants.base import BaseGrant
 from herre.grants.refreshable import Refreshable
@@ -50,11 +51,12 @@ class WindowedGrant(BaseGrant, Refreshable, OpenIdUser):
         redirect_uri = f"http://{self.redirect_host}:{self.redirect_port}"
 
         web_app_client = WebApplicationClient(
-            herre.client_id, scope=herre.scope_delimiter.join(herre.scopes + ["openid"])
+            herre.client_id.get_secret_value(),
+            scope=herre.scope_delimiter.join(herre.scopes + ["openid"]),
         )
 
         async with OAuth2Session(
-            herre.client_id,
+            herre.client_id.get_secret_value(),
             web_app_client,
             scope=herre.scope_delimiter.join(herre.scopes + ["openid"]),
             redirect_uri=redirect_uri,
@@ -66,7 +68,7 @@ class WindowedGrant(BaseGrant, Refreshable, OpenIdUser):
 
             token_dict = await session.fetch_token(
                 build_token_url(herre),
-                client_secret=herre.client_secret,
+                client_secret=herre.client_secret.get_secret_value(),
                 authorization_response=path,
                 state=state,
             )
@@ -76,3 +78,6 @@ class WindowedGrant(BaseGrant, Refreshable, OpenIdUser):
     class Config:
         arbitrary_types_allowed = True
         underscore_attrs_are_private = True
+        json_encoder = {
+            QtWidgets.QWidget: lambda x: x.__class__.__name__,
+        }

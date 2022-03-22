@@ -10,7 +10,8 @@ from herre.types import Token
 class BackendGrant(BaseGrant, Refreshable):
     async def afetch_token(self, herre: Herre) -> Token:
         auth_client = BackendApplicationClient(
-            client_id=herre.client_id, scope=herre.scope_delimiter.join(herre.scopes)
+            client_id=herre.client_id.get_secret_value(),
+            scope=herre.scope_delimiter.join(herre.scopes),
         )
 
         async with OAuth2Session(
@@ -19,8 +20,8 @@ class BackendGrant(BaseGrant, Refreshable):
 
             token_dict = await session.fetch_token(
                 token_url=build_token_url(herre),
-                client_id=herre.client_id,
-                client_secret=herre.client_secret,
+                client_id=str(herre.client_id.get_secret_value()),
+                client_secret=str(herre.client_secret.get_secret_value()),
                 verify=True,
             )
 

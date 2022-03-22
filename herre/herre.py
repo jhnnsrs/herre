@@ -3,7 +3,7 @@ from optparse import Option
 from re import L
 from typing import List, Optional
 import aiohttp
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 from herre.errors import LoginException
 from herre.grants.base import BaseGrant
 import os
@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 class Herre(KoiledModel):
     grant: Optional[BaseGrant] = None
     base_url: str = ""
-    client_id: str = ""
-    client_secret: str = ""
+    client_id: SecretStr = ""
+    client_secret: SecretStr = ""
     scopes: List[str] = Field(default_factory=lambda: list(["introspection"]))
     authorize_path: str = "authorize"
     refresh_path: str = "token"
@@ -119,15 +119,17 @@ class Herre(KoiledModel):
             try:
                 with shelve.open(self.token_file) as cfg:
                     client_id = cfg["client_id"]
-                    if client_id == self.client_id:
+                    if client_id == self.client_id.get_secret_value():
                         potential_token = Token(**cfg["token"])
-                        potential_user = User(**cfg["user"])
+                        if "user" in cfg:
+                            potential_user = User(**cfg["user"])
                     else:
                         logger.info(
                             "Ommiting token file as client_id does not match current client_id"
                         )
 
             except Exception:
+                print
                 logger.info("No token file found")
 
         if not potential_token or force_refresh:
@@ -136,6 +138,13 @@ class Herre(KoiledModel):
         if not potential_user or force_refresh:
             if hasattr(self.grant, "afetch_user"):
                 potential_user = await self.grant.afetch_user(self, potential_token)
+
+        if not self.no_temp:
+            with shelve.open(self.token_file, "w") as cfg:
+                cfg["client_id"] = self.client_id.get_secret_value()
+                cfg["token"] = potential_token.dict()
+                if potential_user:
+                    cfg["user"] = potential_user.dict()
 
         self._token = potential_token
         self._user = potential_user
@@ -187,7 +196,6 @@ class Herre(KoiledModel):
         current_herre.set(None)
 
     class Config:
-        arbitrary_types_allowed = True
         underscore_attrs_are_private = True
         extra = "forbid"
 

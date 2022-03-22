@@ -32,6 +32,9 @@ pytest-qt = "^4.0.2"
 PyQtWebEngine = "^5.15.5"
 PyQt5 = "^5.15.6"
 
+[tool.pytest.ini_options]
+qt_api="pyqt5"
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

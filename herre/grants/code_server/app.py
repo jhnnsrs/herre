@@ -24,12 +24,13 @@ class AuthorizationCodeServerGrant(BaseGrant, Refreshable, OpenIdUser):
     async def afetch_token(self, herre: Herre) -> Token:
 
         web_app_client = WebApplicationClient(
-            herre.client_id, scope=herre.scope_delimiter.join(herre.scopes + ["openid"])
+            herre.client_id.get_secret_value(),
+            scope=herre.scope_delimiter.join(herre.scopes + ["openid"]),
         )
 
         # Create an OAuth2 session for the OSF
         async with OAuth2Session(
-            herre.client_id,
+            herre.client_id.get_secret_value(),
             web_app_client,
             scope=herre.scope_delimiter.join(herre.scopes + ["openid"]),
             redirect_uri=f"http://{self.redirect_host}:{self.redirect_port}/",
@@ -42,7 +43,7 @@ class AuthorizationCodeServerGrant(BaseGrant, Refreshable, OpenIdUser):
             if path:
                 token_dict = await session.fetch_token(
                     build_token_url(herre),
-                    client_secret=herre.client_secret,
+                    client_secret=herre.client_secret.get_secret_value(),
                     authorization_response=path,
                     state=state,
                 )
