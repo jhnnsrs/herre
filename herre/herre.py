@@ -8,7 +8,7 @@ from herre.errors import LoginException
 from herre.grants.base import BaseGrant
 import os
 import logging
-from herre.types import HerreState, User, Token
+from herre.types import User, Token
 import shelve
 import contextvars
 import os
@@ -43,7 +43,6 @@ class Herre(KoiledModel):
     no_temp: bool = False
 
     _lock: asyncio.Lock = None
-
     _user: Optional[User] = None
     _token: Optional[Token] = None
 

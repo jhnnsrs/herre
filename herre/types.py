@@ -31,7 +31,3 @@ class Token(BaseModel):
     expires_in: Optional[int]
     expires_at: Optional[int]
     token_type: Optional[str]
-
-
-class HerreState(BaseModel):
-    logged_in: bool = False

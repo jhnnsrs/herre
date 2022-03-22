@@ -17,14 +17,9 @@ REDIRECT_PORT = 6767
 
 
 class AuthorizationCodeServerGrant(BaseGrant, Refreshable, OpenIdUser):
-    def __init__(
-        self,
-        redirect_port=REDIRECT_PORT,
-        redirect_timeout=40,
-    ) -> None:
-        self.redirect_port = redirect_port
-        self.redirect_timeout = redirect_timeout
-        self.redirect_uri = f"http://localhost:{redirect_port}/"
+    redirect_port: int = 6767
+    redirect_timeout: int = 40
+    redirect_host: str = "localhost"
 
     async def afetch_token(self, herre: Herre) -> Token:
 
@@ -37,7 +32,7 @@ class AuthorizationCodeServerGrant(BaseGrant, Refreshable, OpenIdUser):
             herre.client_id,
             web_app_client,
             scope=herre.scope_delimiter.join(herre.scopes + ["openid"]),
-            redirect_uri=self.redirect_uri,
+            redirect_uri=f"http://{self.redirect_host}:{self.redirect_port}/",
         ) as session:
 
             auth_url, state = session.authorization_url(build_authorize_url(herre))

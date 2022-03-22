@@ -8,8 +8,6 @@ from herre.herre import Herre, build_userinfo_url
 
 
 class OpenIdUser:
-    type = None
-
     async def afetch_user(self, herre: Herre, token: Token) -> User:
         async with aiohttp.ClientSession(
             headers={"Authorization": f"Bearer {token.access_token}"}

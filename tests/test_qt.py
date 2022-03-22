@@ -58,17 +58,18 @@ class QtHerreWidget(QtWidgets.QWidget):
 
 def test_call_task(qtbot, monkeypatch):
     """Tests if we can call a task from a koil widget."""
-    widget = QtHerreWidget()
-    qtbot.addWidget(widget)
 
     monkeypatch.setattr(
         LoginWrapper,
-        "wait_for_redirect",
-        lambda self, auth, future: future.resolve("path"),
+        "initialize",
+        lambda self, future, auth, redirect: future.resolve("path"),
     )
+
     monkeypatch.setattr(OAuth2Session, "fetch_token", fake_token_generator)
     monkeypatch.setattr(WindowedGrant, "afetch_user", fake_user_generator)
 
+    widget = QtHerreWidget()
+    qtbot.addWidget(widget)
     # click in the Greet button and make sure it updates the appropriate label
     with qtbot.waitSignal(widget.login_task.returned) as b:
         qtbot.mouseClick(widget.button_greet, QtCore.Qt.LeftButton)

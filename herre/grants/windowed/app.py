@@ -1,3 +1,4 @@
+from pydantic import Field
 from herre.grants.base import BaseGrant
 from herre.grants.refreshable import Refreshable
 from herre.grants.openid import OpenIdUser
@@ -14,49 +15,40 @@ from oauthlib.oauth2 import WebApplicationClient
 
 
 class LoginWrapper(QWebEngineView):
-    def __init__(self, redirect_uri, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.name = self.page()
-        self.redirect_uri = redirect_uri
+        self.redirect_uri = None
+        self.show_coro = QtCoro(self.initialize)
         self.urlChanged.connect(self._interceptUrl)
 
-    def wait_for_redirect(self, auth_url, future):
-        self.setUrl(QtCore.QUrl(auth_url))
+    def initialize(self, future: QtFuture, auth_url, redirect_uri):
         self.future = future
+        self.redirect_uri = redirect_uri
+        self.future = future
+
+        self.setUrl(QtCore.QUrl(auth_url))
+        self.show()
 
     def _interceptUrl(self, url):
         url_string = bytes(url.toEncoded()).decode()
-        if url_string.startswith(self.redirect_uri):
-            if self.future:
-                self.future.resolve(url_string)
-                self.close()
+        if self.redirect_uri:
+            if url_string.startswith(self.redirect_uri):
+                if self.future:
+                    self.future.resolve(url_string)
+                    self.close()
 
 
-class WindowedGrant(BaseGrant, QtWidgets.QWidget, Refreshable, OpenIdUser):
-    refreshable = True
-    is_user_grant = False
-
-    def __init__(
-        self, *args, redirect_port=6767, redirect_timeout=40, **kwargs
-    ) -> None:
-        super().__init__(
-            *args,
-            **kwargs,
-        )
-        self.show_coro = QtCoro(self.show)
-        self.redirect_port = redirect_port
-        self.redirect_timeout = redirect_timeout
-        self.redirect_uri = f"http://localhost:{redirect_port}/"
-
-        self.login_wrapper = LoginWrapper(self.redirect_uri)
-
-    def show(self, future: QtFuture, auth_url):
-        self.login_future = future
-        self.login_wrapper.wait_for_redirect(auth_url, future)
-        self.login_wrapper.show()
+class WindowedGrant(BaseGrant, Refreshable, OpenIdUser):
+    redirect_port: int = 6767
+    redirect_host: str = "localhost"
+    redirect_timeout: int = 40
+    login_wrapper: LoginWrapper = Field(default_factory=LoginWrapper)
 
     async def afetch_token(self, herre: Herre) -> Token:
-        print("We are binding to a future")
+
+        redirect_uri = f"http://{self.redirect_host}:{self.redirect_port}"
+
         web_app_client = WebApplicationClient(
             herre.client_id, scope=herre.scope_delimiter.join(herre.scopes + ["openid"])
         )
@@ -65,12 +57,12 @@ class WindowedGrant(BaseGrant, QtWidgets.QWidget, Refreshable, OpenIdUser):
             herre.client_id,
             web_app_client,
             scope=herre.scope_delimiter.join(herre.scopes + ["openid"]),
-            redirect_uri=self.redirect_uri,
+            redirect_uri=redirect_uri,
         ) as session:
 
             auth_url, state = session.authorization_url(build_authorize_url(herre))
 
-            path = await self.show_coro.acall(auth_url)
+            path = await self.login_wrapper.show_coro.acall(auth_url, redirect_uri)
 
             token_dict = await session.fetch_token(
                 build_token_url(herre),
@@ -80,3 +72,7 @@ class WindowedGrant(BaseGrant, QtWidgets.QWidget, Refreshable, OpenIdUser):
             )
 
             return Token(**token_dict)
+
+    class Config:
+        arbitrary_types_allowed = True
+        underscore_attrs_are_private = True
