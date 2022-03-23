@@ -243,7 +243,7 @@ typing-extensions = ">=3.7.4.3"
 
 [[package]]
 name = "koil"
-version = "0.1.103"
+version = "0.1.106"
 description = "Async for a sync world"
 category = "main"
 optional = false
@@ -634,7 +634,7 @@ windowed = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "d860c20c8e8f4c93843557f8a846b3ca102b900aa20ae9cbedcc3d9e8029f456"
+content-hash = "7a00298d4dc6c1a8fb889f3a3155698166bf07eeaa6586dab496ec9b908c4f2c"
 
 [metadata.files]
 aiohttp = [
@@ -884,8 +884,8 @@ janus = [
     {file = "janus-1.0.0.tar.gz", hash = "sha256:df976f2cdcfb034b147a2d51edfc34ff6bfb12d4e2643d3ad0e10de058cb1612"},
 ]
 koil = [
-    {file = "koil-0.1.103-py3-none-any.whl", hash = "sha256:ddf26034c5f0ea415e540d6f283517818180a88f1c5d4348bfdb622cdb82cdf7"},
-    {file = "koil-0.1.103.tar.gz", hash = "sha256:6124281c8fae60e1f1e5b4132b4b91c9d1a9be518b715dfd55315301274a464f"},
+    {file = "koil-0.1.106-py3-none-any.whl", hash = "sha256:53fe8d6faa6a4d304262f7057470272f2ffad59c1a1265ea5bd827f5e0360c00"},
+    {file = "koil-0.1.106.tar.gz", hash = "sha256:3042f2a99b96e99befa5d8c724eb504103f4631247acb337ddeb842e58f4ac43"},
 ]
 multidict = [
     {file = "multidict-6.0.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:0b9e95a740109c6047602f4db4da9949e6c5945cefbad34a1299775ddc9a62e2"},

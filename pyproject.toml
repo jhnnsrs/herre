@@ -15,7 +15,7 @@ aiohttp = "^3.7.4"
 oauthlib = "^3.1.1"
 fakts = "0.1.40"
 pydantic = "^1.9.0"
-koil = "0.1.103"
+koil = "0.1.106"
 
 [tool.poetry.extras]
 windowed = ["PyQtWebEngine"]

@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 class Herre(KoiledModel):
     grant: Optional[BaseGrant] = None
     base_url: str = ""
-    client_id: SecretStr = ""
-    client_secret: SecretStr = ""
+    client_id: SecretStr = SecretStr("")
+    client_secret: SecretStr = SecretStr("")
     scopes: List[str] = Field(default_factory=lambda: list(["introspection"]))
     authorize_path: str = "authorize"
     refresh_path: str = "token"
