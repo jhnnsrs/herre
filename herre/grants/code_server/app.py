@@ -48,7 +48,6 @@ class AuthorizationCodeServerGrant(BaseGrant, Refreshable, OpenIdUser):
                     state=state,
                 )
 
-                print(token_dict)
                 return Token(**token_dict)
 
         raise Exception("Could not fetch token")

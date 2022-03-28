@@ -1,7 +1,7 @@
 import time
 from herre import Herre
 from herre.grants.test.app import MockGrant
-from koil.qt import QtKoil, QtTask
+from koil.qt import QtKoil, QtRunner
 from PyQt5 import QtWidgets, QtCore
 from herre.grants.windowed.app import LoginWrapper, WindowedGrant
 from herre import Herre, utils
@@ -26,7 +26,8 @@ async def fake_user_generator(*args, **kwargs):
 class QtHerreWidget(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.koil = QtKoil()
+        self.koil = QtKoil(parent=self)
+        self.koil.connect()
 
         self.grant = WindowedGrant()
 
@@ -39,7 +40,7 @@ class QtHerreWidget(QtWidgets.QWidget):
 
         self.herre.connect()
 
-        self.login_task = QtTask(self.herre.alogin)
+        self.login_task = QtRunner(self.herre.alogin)
 
         self.button_greet = QtWidgets.QPushButton("Greet")
         self.greet_label = QtWidgets.QLabel("")
@@ -56,7 +57,7 @@ class QtHerreWidget(QtWidgets.QWidget):
         self.login_task.run()
 
 
-def test_call_task(qtbot, monkeypatch):
+def test_fetch_from_windowed_grant(qtbot, monkeypatch):
     """Tests if we can call a task from a koil widget."""
 
     monkeypatch.setattr(

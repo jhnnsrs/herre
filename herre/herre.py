@@ -39,6 +39,7 @@ class Herre(KoiledModel):
 
     login_on_enter: bool = False
     logout_on_exit: bool = False
+    entered = False
 
     no_temp: bool = False
 
@@ -65,7 +66,7 @@ class Herre(KoiledModel):
         assert self._token is not None, "No token fetched"
         return self._token
 
-    async def aget_token(self):
+    async def aget_token(self, force_refresh=False):
         """Get an access token
 
         This is a loop safe couroutine, that will return an access token if it is already available or
@@ -83,8 +84,8 @@ class Herre(KoiledModel):
         ), "We were not initialized. Please enter the context first"
 
         async with self._lock:
-            if not self._token or not self._token.access_token:
-                await self.alogin()
+            if not self._token or not self._token.access_token or force_refresh:
+                await self.alogin(force_refresh=force_refresh)
 
         return self._token.access_token
 
@@ -188,6 +189,7 @@ class Herre(KoiledModel):
         current_herre.set(self)
         if self.login_on_enter:
             await self.alogin()
+        self.entered = True
         return self
 
     async def __aexit__(self, *args, **kwargs):
