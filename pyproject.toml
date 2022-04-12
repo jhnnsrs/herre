@@ -31,6 +31,7 @@ pytest-qt = "^4.0.2"
 PyQtWebEngine = "^5.15.5"
 PyQt5 = "^5.15.6"
 testcontainers = "^3.5.3"
+pydoc-markdown = "4.5.0"
 
 [tool.pytest.ini_options]
 qt_api="pyqt5"
@@ -43,3 +44,11 @@ markers = [
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[[tool.pydoc-markdown.loaders]]
+type = "python"
+search_path = [ "herre" ]
+
+[tool.pydoc-markdown.renderer]
+type = "docusaurus"
+docs_base_path = "website/docs"

@@ -1,0 +1,72 @@
+{
+  "items": [
+    {
+      "items": [
+        "reference/__init__/__init__"
+      ],
+      "label": "__init__",
+      "type": "category"
+    },
+    {
+      "items": [
+        "reference/fakts/__init__",
+        "reference/fakts/herre",
+        "reference/fakts/registry"
+      ],
+      "label": "fakts",
+      "type": "category"
+    },
+    {
+      "items": [
+        {
+          "items": [
+            "reference/grants/backend/__init__",
+            "reference/grants/backend/app"
+          ],
+          "label": "grants.backend",
+          "type": "category"
+        },
+        {
+          "items": [
+            "reference/grants/code_server/__init__",
+            "reference/grants/code_server/app"
+          ],
+          "label": "grants.code_server",
+          "type": "category"
+        },
+        {
+          "items": [
+            "reference/grants/test/__init__",
+            "reference/grants/test/app"
+          ],
+          "label": "grants.test",
+          "type": "category"
+        },
+        {
+          "items": [
+            "reference/grants/windowed/__init__",
+            "reference/grants/windowed/app"
+          ],
+          "label": "grants.windowed",
+          "type": "category"
+        },
+        "reference/grants/__init__",
+        "reference/grants/base",
+        "reference/grants/errors",
+        "reference/grants/openid",
+        "reference/grants/refreshable",
+        "reference/grants/session",
+        "reference/grants/user",
+        "reference/grants/utils"
+      ],
+      "label": "grants",
+      "type": "category"
+    },
+    "reference/errors",
+    "reference/herre",
+    "reference/types",
+    "reference/utils"
+  ],
+  "label": "Reference",
+  "type": "category"
+}
