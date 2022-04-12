@@ -59,7 +59,7 @@ jobs:
         run: xvfb-run `which poetry` run pytest --cov --cov-report=xml -k "not integration"
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
-  linux_unit:
+  linux_integration:
     strategy:
       fail-fast: false
       matrix:
