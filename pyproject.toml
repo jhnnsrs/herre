@@ -34,6 +34,10 @@ testcontainers = "^3.5.3"
 
 [tool.pytest.ini_options]
 qt_api="pyqt5"
+markers = [
+    "integration: marks tests that require a running server",
+    "qt: marks tests that require a running qt application",
+]
 
 
 [build-system]
