@@ -1,4 +1,6 @@
 import time
+
+import pytest
 from herre import Herre
 from herre.grants.test.app import MockGrant
 from koil.qt import QtKoil, QtRunner
@@ -57,6 +59,7 @@ class QtHerreWidget(QtWidgets.QWidget):
         self.login_task.run()
 
 
+@pytest.mark.qt
 def test_fetch_from_windowed_grant(qtbot, monkeypatch):
     """Tests if we can call a task from a koil widget."""
 

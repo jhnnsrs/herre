@@ -1,0 +1,19 @@
+version: "3.4"
+
+services:
+  daten:
+    image: jhnnsrs/daten:prod
+    restart: always
+    environment:
+      POSTGRES_MULTIPLE_DATABASES: herredb, mikrodb
+      POSTGRES_PASSWORD: hello_django
+      POSTGRES_USER: hello_django
+  herre:
+    image: jhnnsrs/herre:prod
+    command: bash run-debug.sh
+    volumes:
+      - ./herre.yaml:/workspace/config.yaml
+    ports:
+      - 8008:8000
+    depends_on:
+      - daten
