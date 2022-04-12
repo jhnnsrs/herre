@@ -15,8 +15,8 @@ class QtHerreWidget(QtWidgets.QWidget):
         self.herre = Herre(
             base_url="http://localhost:8000/o",
             grant=self.grant,
-            client_id="UGqhHa2OS8NmTRjkVg8WKOWczYqkDVuK61yCueuO",
-            client_secret="3oosB6FoC2iGASI8tkN16S8mPtlIvhqetvG5EOOJcLkn3txggTRxdp35G23CkNmvEY6fQXIXHaSzTa9Jb5Rk1hxWx0Fey0iUeOv2ZN568Z9z14kUbUbm4QQ1nacUW1gD",
+            client_id="Zvc8fwLMMINjcAxoaTBG2L6ATlV746D3Zc4T4Wiu",
+            client_secret="bPDJKpvrZkhqsIvytwJuuLv8SEKeybPaPeMVpIRtdByLUERtyES2v18Dm38PUbVO0myUFAwLzwyWjo4jk91Yrhlfn51DPXN7MxYCIRedXSaNabvINv8EKv3kcWSY8Wos",
         )
 
         self.herre.connect()

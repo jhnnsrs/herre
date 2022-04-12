@@ -16,11 +16,13 @@ ecosystem
 
 ## Prerequisites
 
-herre needs a oauth2 server to connect to
+herre needs a oauth2/opendid server to connect to
 
 ## Supports
 
 - Authorization Code Flow (PKCE)
+  - Within a Qt app through a QtWebengine View
+  - With a Redirect Server
 - Client-Credentials Flow
 
 ## Usage
@@ -38,7 +40,26 @@ client = Herre(
     name="karl",
 )
 
-client.login()
+with client:
+  client.login()
+
+```
+
+Async usage
+
+```python
+
+client = Herre(
+    grant=AuthorizationCode()
+    host="p-tnagerl-lab1",
+    port=8000,
+    client_id="$YOUR_CLIENT_ID",
+    client_secret="$YOUR_CLIENT_SECRET",
+    name="karl",
+)
+
+async with client:
+  await client.login()
 
 ```
 
