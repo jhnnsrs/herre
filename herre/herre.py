@@ -4,7 +4,7 @@ from re import L
 from typing import List, Optional
 import aiohttp
 from pydantic import BaseModel, Field, SecretStr
-from herre.errors import LoginException
+from herre.errors import HerreError, LoginException
 from herre.grants.base import BaseGrant
 import os
 import logging
@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 class Herre(KoiledModel):
     grant: Optional[BaseGrant] = None
     base_url: str = ""
+    name: str = ""
     client_id: SecretStr = SecretStr("")
     client_secret: SecretStr = SecretStr("")
     scopes: List[str] = Field(default_factory=lambda: list(["introspection"]))
@@ -36,6 +37,7 @@ class Herre(KoiledModel):
     max_retries: int = 1
     allow_insecure: bool = False
     scope_delimiter: str = " "
+    auto_login = True
 
     login_on_enter: bool = False
     logout_on_exit: bool = False
@@ -85,9 +87,16 @@ class Herre(KoiledModel):
 
         async with self._lock:
             if not self._token or not self._token.access_token or force_refresh:
+                if not self.auto_login:
+                    raise HerreError(
+                        "Auto-login is set to false and we need to login again"
+                    )
                 await self.alogin(force_refresh=force_refresh)
 
         return self._token.access_token
+
+    async def arefresh_token(self):
+        return await self.aget_token(force_refresh=True)
 
     async def alogin(self, force_refresh=False, retry=0):
         """Login Function

@@ -5,12 +5,11 @@ services:
     image: jhnnsrs/daten:prod
     restart: always
     environment:
-      POSTGRES_MULTIPLE_DATABASES: herredb, mikrodb
+      POSTGRES_MULTIPLE_DATABASES: herre_db, mikro_db
       POSTGRES_PASSWORD: hello_django
       POSTGRES_USER: hello_django
   herre:
     image: jhnnsrs/herre:prod
-    command: bash run-debug.sh
     volumes:
       - ./herre.yaml:/workspace/config.yaml
     ports:

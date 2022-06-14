@@ -4,11 +4,8 @@ from pydantic import BaseModel
 
 
 class GrantType(str, Enum):
-    IMPLICIT = "IMPLICIT"
-    PASSWORD = "PASSWORD"
-    CLIENT_CREDENTIALS = "CLIENT_CREDENTIALS"
-    AUTHORIZATION_CODE = "AUTHORIZATION_CODE"
-    AUTHORIZATION_CODE_SERVER = "AUTHORIZATION_CODE_SERVER"
+    CLIENT_CREDENTIALS = "client-credentials"
+    AUTHORIZATION_CODE = "authorization-code"
 
 
 class App(BaseModel):

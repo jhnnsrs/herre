@@ -14,9 +14,10 @@ from herre.types import GrantType
 
 class HerreConfig(Config):
     base_url: str
+    name: str
     client_id: SecretStr
     client_secret: SecretStr
-    authorization_grant_type: GrantType
+    grant_type: GrantType
     grant_kwargs: Dict[str, Any] = {}
     scopes: List[str]
     redirect_uri: Optional[str]
@@ -32,22 +33,31 @@ class HerreConfig(Config):
 
 
 class FaktsHerre(Herre):
+    fakts_group: str = "herre"
     grant_registry: GrantRegistry = Field(default_factory=get_default_grant_registry)
+    base_url: Optional[str]
+    name: Optional[str]
 
-    def configure(self, config: HerreConfig, fakts: Fakts) -> None:
-        self.token_file = f"{fakts.subapp}.token.temp"
+    _configured = False
+
+    def configure(self, config: HerreConfig) -> None:
+        self.name = config.name
+        self.token_file = f"{config.name}.token.temp"
         self.base_url = config.base_url
         self.client_id = self.client_id or config.client_id
         self.client_secret = self.client_secret or config.client_secret
         self.token_file = self.token_file or config.token_file
 
         self.grant = self.grant or self.grant_registry.get_grant_for_type(
-            config.authorization_grant_type
+            config.grant_type
         )(**config.grant_kwargs)
 
-    async def __aenter__(self, **kwargs):
-        fakts = current_fakts.get()
-        config = await HerreConfig.from_fakts(fakts)
-        self.configure(config, fakts)
+    async def alogin(self, force_refresh=False, retry=0):
+        if not self._configured:
+            config = await HerreConfig.from_fakts(self.fakts_group)
+            self.configure(config)
 
+        return await super().alogin(force_refresh, retry)
+
+    async def __aenter__(self, **kwargs):
         return await super().__aenter__(**kwargs)

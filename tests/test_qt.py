@@ -29,7 +29,7 @@ class QtHerreWidget(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.koil = QtKoil(parent=self)
-        self.koil.connect()
+        self.koil.enter()
 
         self.grant = WindowedGrant()
 
@@ -41,7 +41,7 @@ class QtHerreWidget(QtWidgets.QWidget):
             no_temp=True,
         )
 
-        self.herre.connect()
+        self.herre.enter()
 
         self.login_task = QtRunner(self.herre.alogin)
 
