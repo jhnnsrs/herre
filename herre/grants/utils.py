@@ -25,6 +25,14 @@ def build_refresh_url(herre: Herre):
     )
 
 
+def build_me_url(herre: Herre):
+    return (
+        f"{herre.base_url}/{herre.me_path}/"
+        if herre.append_trailing_slash
+        else f"{herre.base_url}/{herre.me_path}"
+    )
+
+
 def build_userinfo_url(herre: Herre):
     return (
         f"{herre.base_url}/{herre.userinfo_path}/"

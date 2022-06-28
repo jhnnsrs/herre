@@ -8,3 +8,7 @@ class NoHerreFound(HerreError):
 
 class LoginException(HerreError):
     pass
+
+
+class ConfigurationException(HerreError):
+    pass

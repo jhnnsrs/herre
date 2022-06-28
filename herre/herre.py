@@ -3,8 +3,9 @@ from optparse import Option
 from re import L
 from typing import List, Optional
 import aiohttp
+import oauthlib.oauth2.rfc6749.errors
 from pydantic import BaseModel, Field, SecretStr
-from herre.errors import HerreError, LoginException
+from herre.errors import ConfigurationException, HerreError, LoginException
 from herre.grants.base import BaseGrant
 import os
 import logging
@@ -34,6 +35,7 @@ class Herre(KoiledModel):
     append_trailing_slash = True
     token_file: str = "token.temp"
     userinfo_path: str = "userinfo"
+    me_path: str = "me"
     max_retries: int = 1
     allow_insecure: bool = False
     scope_delimiter: str = " "
@@ -143,7 +145,11 @@ class Herre(KoiledModel):
                 logger.info("No token file found")
 
         if not potential_token or force_refresh:
-            potential_token = await self.grant.afetch_token(self)
+            try:
+                potential_token = await self.grant.afetch_token(self)
+            except oauthlib.oauth2.rfc6749.errors.InvalidClientError:
+                logger.error("Invalid grant")
+                raise ConfigurationException("Invalid client ID")
 
         if not potential_user or force_refresh:
             if hasattr(self.grant, "afetch_user"):
@@ -164,15 +170,8 @@ class Herre(KoiledModel):
             self._lock is not None
         ), "We were not initialized. Please enter the context first"
 
-        try:
-            with shelve.open(self.token_file) as cfg:
-                cfg["token"] = None
-                cfg["user"] = None
-                cfg["client_id"] = None
-        except KeyError:
-            pass
-
-        self.state = None
+        os.remove(self.token_file)
+        self._token = None
 
     def login(self, force_refresh=False, retry=0, **kwargs):
         return unkoil(
@@ -190,7 +189,7 @@ class Herre(KoiledModel):
 
     @property
     def logged_in(self):
-        return self.state is not None
+        return self._token is not None
 
     async def __aenter__(self):
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "0" if self.allow_insecure else "1"

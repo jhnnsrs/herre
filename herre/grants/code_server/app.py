@@ -1,5 +1,4 @@
 from herre.grants.base import BaseGrant
-from herre.grants.openid import OpenIdUser
 from herre.grants.refreshable import Refreshable
 from oauthlib.oauth2 import WebApplicationClient
 from herre.grants.session import OAuth2Session
@@ -16,7 +15,7 @@ logger = logging.getLogger(__name__)
 REDIRECT_PORT = 6767
 
 
-class AuthorizationCodeServerGrant(BaseGrant, Refreshable, OpenIdUser):
+class AuthorizationCodeServerGrant(BaseGrant, Refreshable):
     redirect_port: int = 6767
     redirect_timeout: int = 40
     redirect_host: str = "localhost"

@@ -1,10 +1,11 @@
+import aiohttp
 from herre.grants.base import BaseGrant
 from herre.grants.refreshable import Refreshable
 from oauthlib.oauth2.rfc6749.clients.backend_application import BackendApplicationClient
 from herre.grants.session import OAuth2Session
-from herre.grants.utils import build_token_url
+from herre.grants.utils import build_me_url, build_token_url, build_userinfo_url
 from herre.herre import Herre
-from herre.types import Token
+from herre.types import Token, User
 
 
 class BackendGrant(BaseGrant, Refreshable):
@@ -26,3 +27,15 @@ class BackendGrant(BaseGrant, Refreshable):
             )
 
         return Token(**token_dict)
+
+    async def afetch_user(self, herre: Herre, token: Token) -> User:
+        async with aiohttp.ClientSession(
+            headers={"Authorization": f"Bearer {token.access_token}"}
+        ) as session:
+            async with session.get(build_me_url(herre)) as resp:
+
+                user_json = await resp.json()
+                if "detail" in user_json:
+                    raise Exception(user_json["detail"])
+
+                return User(**user_json)
