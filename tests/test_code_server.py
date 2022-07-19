@@ -5,17 +5,7 @@ from herre.grants.code_server.app import AuthorizationCodeServerGrant
 from herre.grants.test.app import MockGrant
 from herre.grants.session import OAuth2Session
 from herre.types import User
-
-
-async def fake_token_generator(*args, **kwargs):
-    return {
-        "access_token": "fake_access_token",
-        "refresh_token": "fake_refresh_token",
-    }
-
-
-async def fake_user_generator(*args, **kwargs):
-    return User(sub="fake_user")
+from tests.herretest.utils import fake_token_generator, fake_user_generator
 
 
 async def redirect_result(*args, **kwargs):

@@ -1,3 +1,4 @@
+import aiohttp
 from herre.grants.base import BaseGrant
 from herre.grants.refreshable import Refreshable
 from oauthlib.oauth2 import WebApplicationClient
@@ -7,7 +8,7 @@ import webbrowser
 from aiohttp import web
 import asyncio
 import logging
-from herre.grants.utils import build_authorize_url, build_token_url
+from herre.grants.utils import build_authorize_url, build_me_url, build_token_url
 from herre.herre import Herre
 from herre.utils import wait_for_redirect
 
@@ -50,6 +51,18 @@ class AuthorizationCodeServerGrant(BaseGrant, Refreshable):
                 return Token(**token_dict)
 
         raise Exception("Could not fetch token")
+
+    async def afetch_user(self, herre: Herre, token: Token) -> User:
+        async with aiohttp.ClientSession(
+            headers={"Authorization": f"Bearer {token.access_token}"}
+        ) as session:
+            async with session.get(build_me_url(herre)) as resp:
+
+                user_json = await resp.json()
+                if "detail" in user_json:
+                    raise Exception(user_json["detail"])
+
+                return User(**user_json)
 
     async def get_path_from_redirect(self, auth_url):
         return await wait_for_redirect(
