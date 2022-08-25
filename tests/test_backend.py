@@ -2,7 +2,7 @@ from herre import Herre
 from herre.grants.backend.app import BackendGrant
 from herre.grants.test.app import MockGrant
 from herre.grants.session import OAuth2Session
-from tests.herretest.utils import fake_token_generator, fake_user_generator
+from .utils import fake_token_generator, fake_user_generator
 
 
 async def test_backend_mock_sync(monkeypatch):

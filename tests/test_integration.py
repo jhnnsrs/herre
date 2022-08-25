@@ -1,7 +1,6 @@
 from urllib.robotparser import RequestRate
 from urllib.robotparser import RequestRate
 import requests
-from testcontainers.compose import DockerCompose
 import pytest
 from herre import Herre
 from herre.grants.backend.app import BackendGrant
@@ -12,6 +11,9 @@ from .utils import build_relative
 @pytest.mark.integration
 @pytest.fixture(scope="session")
 def environment():
+
+    from testcontainers.compose import DockerCompose
+
     with DockerCompose(
         filepath=build_relative("integration"),
         compose_file_name="docker-compose.yaml",

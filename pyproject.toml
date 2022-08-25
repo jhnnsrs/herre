@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "herre"
-version = "0.2.4"
+version = "0.2.5"
 readme = "README.md"
 description = "openid connect client tailore to pyqt and async environments"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
@@ -12,9 +12,9 @@ python = "^3.7"
 QtPy = {version= "^2.0.1", optional = true}
 aiohttp = "^3.7.4"
 oauthlib = "^3.1.1"
-fakts = {version = "^0.2.4", optional = true}
+fakts = {version = "^0.2.5", optional = true}
 pydantic = "^1.9.0"
-koil = "^0.2.4"
+koil = "^0.2.6"
 
 [tool.poetry.extras]
 qt = ["QtPy"]
