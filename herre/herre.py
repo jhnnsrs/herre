@@ -141,7 +141,6 @@ class Herre(KoiledModel):
                         )
 
             except Exception:
-                print
                 logger.info("No token file found")
 
         if not potential_token or force_refresh:

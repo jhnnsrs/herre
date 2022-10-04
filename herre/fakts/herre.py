@@ -50,10 +50,8 @@ class FaktsHerre(Herre):
 
     async def alogin(self, force_refresh=False, retry=0):
         fakts = get_current_fakts()
-        print(self._old_fakt)
 
         if fakts.has_changed(self._old_fakt, self.fakts_group):
-            print("FAKTS HAVE CHANGED")
             self._old_fakt = await fakts.aget(self.fakts_group)
             self.configure(HerreFakt(**self._old_fakt))
         try:

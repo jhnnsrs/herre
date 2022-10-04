@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "herre"
-version = "0.2.5"
+version = "0.2.6"
 readme = "README.md"
 description = "openid connect client tailore to pyqt and async environments"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]

@@ -78,5 +78,3 @@ def test_fetch_from_windowed_grant(qtbot, monkeypatch):
     # click in the Greet button and make sure it updates the appropriate label
     with qtbot.waitSignal(widget.login_task.returned) as b:
         qtbot.mouseClick(widget.button_greet, QtCore.Qt.LeftButton)
-
-        print(b)
