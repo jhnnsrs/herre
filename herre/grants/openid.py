@@ -10,7 +10,8 @@ from herre.herre import Herre, build_userinfo_url
 class OpenIdUser:
     async def afetch_user(self, herre: Herre, token: Token) -> User:
         async with aiohttp.ClientSession(
-            headers={"Authorization": f"Bearer {token.access_token}"}
+            headers={"Authorization": f"Bearer {token.access_token}"},
+            connector=aiohttp.TCPConnector(ssl=self.ssl_context)
         ) as session:
             async with session.get(build_userinfo_url(herre)) as resp:
 

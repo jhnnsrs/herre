@@ -1,20 +1,24 @@
 [tool.poetry]
 name = "herre"
-version = "0.2.7"
+version = "0.2.9"
 readme = "README.md"
 description = "openid connect client tailore to pyqt and async environments"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
 license = "CC BY-NC 3.0"
-packages = [{include = "herre"}]
+packages = [{ include = "herre" }]
 
 [tool.poetry.dependencies]
 python = "^3.7"
-QtPy = {version= "^2.0.1", optional = true}
-aiohttp = "^3.7.4"
+aiohttp = ">3.7.4"
+certifi = ">2021"
 oauthlib = "^3.1.1"
-fakts = {version = "^0.2.5", optional = true}
 pydantic = "^1.9.0"
 koil = "^0.2.6"
+
+
+fakts = { version = "^0.2.13", optional = true }
+QtPy = { version = "^2.0.1", optional = true }
+
 
 [tool.poetry.extras]
 qt = ["QtPy"]
@@ -34,7 +38,7 @@ testcontainers = "^3.5.3"
 pydoc-markdown = "4.5.0"
 
 [tool.pytest.ini_options]
-qt_api="pyqt5"
+qt_api = "pyqt5"
 markers = [
     "integration: marks tests that require a running server",
     "qt: marks tests that require a running qt application",
@@ -47,7 +51,7 @@ build-backend = "poetry.core.masonry.api"
 
 [[tool.pydoc-markdown.loaders]]
 type = "python"
-search_path = [ "herre" ]
+search_path = ["herre"]
 
 [tool.pydoc-markdown.renderer]
 type = "docusaurus"

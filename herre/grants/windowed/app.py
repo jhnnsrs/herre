@@ -1,4 +1,5 @@
 from distutils.command.config import config
+import aiohttp
 from pydantic import Field
 from herre.grants.base import BaseGrant
 from herre.grants.refreshable import Refreshable
@@ -60,6 +61,7 @@ class WindowedGrant(BaseGrant, Refreshable, OpenIdUser):
             web_app_client,
             scope=herre.scope_delimiter.join(herre.scopes + ["openid"]),
             redirect_uri=redirect_uri,
+            connector=aiohttp.TCPConnector(ssl=self.ssl_context),
         ) as session:
 
             auth_url, state = session.authorization_url(build_authorize_url(herre))

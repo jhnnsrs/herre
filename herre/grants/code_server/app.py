@@ -34,6 +34,7 @@ class AuthorizationCodeServerGrant(BaseGrant, Refreshable):
             web_app_client,
             scope=herre.scope_delimiter.join(herre.scopes + ["openid"]),
             redirect_uri=f"http://{self.redirect_host}:{self.redirect_port}/",
+            connector=aiohttp.TCPConnector(ssl=self.ssl_context),
         ) as session:
 
             auth_url, state = session.authorization_url(build_authorize_url(herre))
@@ -54,7 +55,8 @@ class AuthorizationCodeServerGrant(BaseGrant, Refreshable):
 
     async def afetch_user(self, herre: Herre, token: Token) -> User:
         async with aiohttp.ClientSession(
-            headers={"Authorization": f"Bearer {token.access_token}"}
+            headers={"Authorization": f"Bearer {token.access_token}"},
+            connector=aiohttp.TCPConnector(ssl=self.ssl_context),
         ) as session:
             async with session.get(build_me_url(herre)) as resp:
 

@@ -16,7 +16,9 @@ class BackendGrant(BaseGrant, Refreshable):
         )
 
         async with OAuth2Session(
-            client=auth_client, scope=herre.scope_delimiter.join(herre.scopes)
+            client=auth_client,
+            scope=herre.scope_delimiter.join(herre.scopes),
+            connector=aiohttp.TCPConnector(ssl=self.ssl_context),
         ) as session:
 
             token_dict = await session.fetch_token(
@@ -30,7 +32,8 @@ class BackendGrant(BaseGrant, Refreshable):
 
     async def afetch_user(self, herre: Herre, token: Token) -> User:
         async with aiohttp.ClientSession(
-            headers={"Authorization": f"Bearer {token.access_token}"}
+            headers={"Authorization": f"Bearer {token.access_token}"},
+            connector=aiohttp.TCPConnector(ssl=self.ssl_context),
         ) as session:
             async with session.get(build_me_url(herre)) as resp:
 

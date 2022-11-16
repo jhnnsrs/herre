@@ -15,7 +15,9 @@ class Refreshable:
 
     async def arefresh(self, herre: Herre, token: Token):
         assert token.refresh_token, "Token had not refresh-token attached"
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(
+            connector=aiohttp.TCPConnector(ssl=self.ssl_context)
+        ) as session:
             async with session.post(
                 build_refresh_url(herre),
                 data={
