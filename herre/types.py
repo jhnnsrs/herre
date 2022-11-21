@@ -8,19 +8,6 @@ class GrantType(str, Enum):
     AUTHORIZATION_CODE = "authorization-code"
 
 
-class App(BaseModel):
-    clientID: Optional[str]
-    name: Optional[str]
-
-
-class User(BaseModel):
-    sub: str  # This is not optional as openid spec demands it
-    username: Optional[str]
-    email: Optional[str]
-    first_name: Optional[str]
-    last_name: Optional[str]
-
-
 class Token(BaseModel):
     access_token: str
     scope: Optional[List[str]]

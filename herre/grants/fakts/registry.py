@@ -43,12 +43,12 @@ def get_default_grant_registry():
     global GRANT_REGISTRY
     if not GRANT_REGISTRY:
         GRANT_REGISTRY = GrantRegistry()
-        from herre.grants.backend.app import BackendGrant
-        from herre.grants.code_server.app import AuthorizationCodeServerGrant
+        from herre.grants.oauth2.client_credentials import ClientCredentialsGrant
+        from herre.grants.oauth2.authorization_code_server import AuthorizationCodeServerGrant
 
         GRANT_REGISTRY.register_grant(
             GrantType.AUTHORIZATION_CODE, AuthorizationCodeServerGrant
         )
-        GRANT_REGISTRY.register_grant(GrantType.CLIENT_CREDENTIALS, BackendGrant)
+        GRANT_REGISTRY.register_grant(GrantType.CLIENT_CREDENTIALS, ClientCredentialsGrant)
 
     return GRANT_REGISTRY

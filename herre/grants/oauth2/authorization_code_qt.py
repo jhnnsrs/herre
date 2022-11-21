@@ -1,17 +1,13 @@
-from distutils.command.config import config
 import aiohttp
 from pydantic import Field
-from herre.grants.base import BaseGrant
-from herre.grants.refreshable import Refreshable
-from herre.grants.openid import OpenIdUser
-from herre.grants.session import OAuth2Session
-from herre.herre import Herre
-from herre.types import Token, User
+from herre.grants.oauth2.base import BaseOauth2Grant
+from herre.grants.oauth2.session import OAuth2Session
+from herre.types import Token
 from qtpy import QtWidgets
 from koil.qt import QtCoro, QtFuture
 from qtpy.QtWebEngineWidgets import QWebEngineView
 from qtpy import QtCore
-from herre.grants.utils import build_authorize_url, build_token_url
+from herre.grants.oauth2.utils import build_authorize_url, build_token_url
 
 from oauthlib.oauth2 import WebApplicationClient
 
@@ -41,36 +37,36 @@ class LoginWrapper(QWebEngineView):
                     self.close()
 
 
-class WindowedGrant(BaseGrant, Refreshable, OpenIdUser):
+class AuthorizationCodeQtGrant(BaseOauth2Grant):
     redirect_port: int = 6767
     redirect_host: str = "localhost"
     redirect_timeout: int = 40
     login_wrapper: LoginWrapper = Field(default_factory=LoginWrapper)
 
-    async def afetch_token(self, herre: Herre) -> Token:
+    async def afetch_token(self, force_refresh=False) -> Token:
 
         redirect_uri = f"http://{self.redirect_host}:{self.redirect_port}"
 
         web_app_client = WebApplicationClient(
-            herre.client_id.get_secret_value(),
-            scope=herre.scope_delimiter.join(herre.scopes + ["openid"]),
+            self.client_id.get_secret_value(),
+            scope=self.scope_delimiter.join(self.scopes + ["openid"]),
         )
 
         async with OAuth2Session(
-            herre.client_id.get_secret_value(),
+            self.client_id.get_secret_value(),
             web_app_client,
-            scope=herre.scope_delimiter.join(herre.scopes + ["openid"]),
+            scope=self.scope_delimiter.join(self.scopes + ["openid"]),
             redirect_uri=redirect_uri,
             connector=aiohttp.TCPConnector(ssl=self.ssl_context),
         ) as session:
 
-            auth_url, state = session.authorization_url(build_authorize_url(herre))
+            auth_url, state = session.authorization_url(build_authorize_url(self))
 
             path = await self.login_wrapper.show_coro.acall(auth_url, redirect_uri)
 
             token_dict = await session.fetch_token(
-                build_token_url(herre),
-                client_secret=herre.client_secret.get_secret_value(),
+                build_token_url(self),
+                client_secret=self.client_secret.get_secret_value(),
                 authorization_response=path,
                 state=state,
             )

@@ -11,8 +11,7 @@
 
 ## Idea
 
-herre is an (asynchronous) oauth2/openid client, that provides sensible defaults for the python
-ecosystem
+herre is an (asynchronous) client for token authentication through oauth2 (and potentially other protocols).
 
 ## Prerequisites
 
@@ -27,17 +26,17 @@ herre needs a oauth2/opendid server to connect to
 
 ## Usage
 
-In order to initialize the Client you need to connect it as a Valid Application with your Arnheim Instance
+In order to initialize the Client you need to specify a specific grant to retrieve the code. A grant constitutes
+a way of retrieving a Token in an asynchronous manner.
 
 ```python
+from herre import Herre
+from herre.grants.oauth2.authorization_code_server import AuthorizationCodeServer
 
 client = Herre(
-    grant=AuthorizationCode()
-    host="p-tnagerl-lab1",
-    port=8000,
+    grant=AuthorizationCodeServerGrant(base_url="https://your_server/oauth_path",
     client_id="$YOUR_CLIENT_ID",
-    client_secret="$YOUR_CLIENT_SECRET",
-    name="karl",
+    client_secret="$YOUR_CLIENT_SECRET",)
 )
 
 with client:
@@ -50,32 +49,57 @@ Async usage
 ```python
 
 client = Herre(
-    grant=AuthorizationCode()
-    host="p-tnagerl-lab1",
-    port=8000,
+    grant=AuthorizationCodeServerGrant(base_url="https://your_server/oauth_path",
     client_id="$YOUR_CLIENT_ID",
     client_secret="$YOUR_CLIENT_SECRET",
-    name="karl",
+    redirect_uri="http://localhost:6767)
 )
 
-async with client:
-  await client.login()
+async with client as c:
+  await c.login()
 
 ```
 
+## Composability
+
+Herre grants provide a simple interface to be composable and enable caching, or support for refresh tokens:
+
+```python
+client = Herre(
+    grant=CacheGrant(
+      grant=AuthorizationCodeServerGrant(base_url="https://your_server/oauth_path",
+          client_id="$YOUR_CLIENT_ID",
+          client_secret="$YOUR_CLIENT_SECRET",
+          redirect_uri="http://localhost:6767")
+))
+
+async with client:
+  await client.login()
+```
+
+Please check out the documentation for the meta grants to see how to enable custom logic.
+
 ## Intergration with Qt
 
-herre fully supports qt-based applications (both PySide2 and PyQt5) and provides a convenient helper class 'QtHerre'
-as well as a included windowed Authoriation Code Flow (needs pyqtwebengine as additional dependency) as well as browser based logins
+herre fully supports qt-based applications (both PySide2 and PyQt5) as well as a a redirect_flow for authentication in a webengine powered qt window Authoriation Code Flow (needs pyqtwebengine as additional dependency) ( you can still use the authorization code server if so desired)
 
 ```python
 class MainWindow(QtWidget)
 
     def __init__(self, *args, **kwargs):
-        self.herre = QtHerre(
-          grant=QtWindowAuthorizationCode()
+        self.herre = Herre(
+          grant=AuthorizationCodeQtGrant(
+            base_url="https://your_server/oauth_path",
+            client_id="$YOUR_CLIENT_ID",
+            client_secret="$YOUR_CLIENT_SECRET",
+            redirect_uri="about:blank,)
         )
 
+        self.herre.enter() #programmatically enter context (make sure to call exit)
+
+
+    def login()
+        self.herre.login()
 ```
 
 ## Build with

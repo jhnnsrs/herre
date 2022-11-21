@@ -9,7 +9,7 @@ from herre.errors import ConfigurationException, HerreError, LoginException
 from herre.grants.base import BaseGrant
 import os
 import logging
-from herre.types import User, Token
+from herre.types import Token
 import shelve
 import contextvars
 import os
@@ -23,19 +23,60 @@ logger = logging.getLogger(__name__)
 
 
 class Herre(KoiledModel):
-    grant: Optional[BaseGrant] = None
-    base_url: str = ""
-    name: str = ""
-    client_id: SecretStr = SecretStr("")
-    client_secret: SecretStr = SecretStr("")
-    scopes: List[str] = Field(default_factory=lambda: list(["introspection"]))
-    authorize_path: str = "authorize"
-    refresh_path: str = "token"
-    token_path: str = "token"
-    append_trailing_slash = True
-    token_file: str = "token.temp"
-    userinfo_path: str = "userinfo"
-    me_path: str = "me"
+    """Herre is a client for Token authentication.
+
+    It provides a unified, compsoable interface for token based authentication based on grant.
+    A grant is a class that is able to retrieve a token. Importantly grants do not have to
+    directly call the token endpoint. They can also use a cache or other means to retrieve the
+    token.
+
+    Herre is a context manager. This allows it both to provide itself as a singleton and handle
+    the asynchronous interface of the grant. As well as providing a lock to ensure that only one
+    request is happening at a time.
+
+    Example:
+        ```python
+        from herre import Herre,
+        from herre.grants.oauth2.client_credentials import ClientCredentialsGrant
+
+        herre = Herre(
+            grant=ClientCredentialsGrant(
+                client_id="my_client_id",
+                client_secret="my_client
+                base_url="https://my_token_url",
+            )
+        )
+
+        with herre:
+            token = herre.get_token()
+        ```
+
+        or aync
+
+        ```python
+        from herre import Herre,
+        from herre.grants.oauth2.client_credentials import ClientCredentialsGrant
+
+        herre = Herre(
+            grant=ClientCredentialsGrant(
+                client_id="my_client_id",
+                client_secret="my_client
+                base_url="https://my_token_url",
+            )
+        )
+
+        async with herre:
+            token = await herre.get_token()
+        ```
+
+
+
+
+
+
+    """
+
+    grant: BaseGrant
     max_retries: int = 1
     allow_insecure: bool = False
     scope_delimiter: str = " "
@@ -48,19 +89,7 @@ class Herre(KoiledModel):
     no_temp: bool = False
 
     _lock: asyncio.Lock = None
-    _user: Optional[User] = None
     _token: Optional[Token] = None
-
-    @property
-    def user(self) -> User:
-        assert (
-            self._lock is not None
-        ), "Please enter the context first to access this variable"
-        assert hasattr(
-            self.grant, "afetch_user"
-        ), "Grant is not a user grant. You are not identifier by a user."
-        assert self._user is not None, "No user fetched"
-        return self._user
 
     @property
     def token(self) -> Token:
@@ -124,52 +153,15 @@ class Herre(KoiledModel):
             self._lock is not None
         ), "We were not initialized. Please enter the context first"
 
-        potential_user = None
-        potential_token = None
-
-        if not force_refresh and not self.no_temp:
-            try:
-                with shelve.open(self.token_file) as cfg:
-                    client_id = cfg["client_id"]
-                    if client_id == self.client_id.get_secret_value():
-                        potential_token = Token(**cfg["token"])
-                        if "user" in cfg:
-                            potential_user = User(**cfg["user"])
-                    else:
-                        logger.info(
-                            "Ommiting token file as client_id does not match current client_id"
-                        )
-
-            except Exception:
-                logger.info("No token file found")
-
-        if not potential_token or force_refresh:
-            try:
-                potential_token = await self.grant.afetch_token(self)
-            except oauthlib.oauth2.rfc6749.errors.InvalidClientError:
-                logger.error("Invalid grant")
-                raise ConfigurationException("Invalid client ID")
-
-        if not potential_user or force_refresh:
-            if hasattr(self.grant, "afetch_user"):
-                potential_user = await self.grant.afetch_user(self, potential_token)
-
-        if not self.no_temp:
-            with shelve.open(self.token_file, "w") as cfg:
-                cfg["client_id"] = self.client_id.get_secret_value()
-                cfg["token"] = potential_token.dict()
-                if potential_user:
-                    cfg["user"] = potential_user.dict()
-
+        potential_token = await self.grant.afetch_token(force_refresh=force_refresh)
         self._token = potential_token
-        self._user = potential_user
+        return self._token
 
     async def alogout(self):
         assert (
             self._lock is not None
         ), "We were not initialized. Please enter the context first"
 
-        os.remove(self.token_file)
         self._token = None
 
     def login(self, force_refresh=False, retry=0, **kwargs):
@@ -200,6 +192,7 @@ class Herre(KoiledModel):
         return self
 
     async def __aexit__(self, *args, **kwargs):
+        os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "0"
         if self.logout_on_exit:
             await self.alogout()
         current_herre.set(None)
@@ -207,11 +200,3 @@ class Herre(KoiledModel):
     class Config:
         underscore_attrs_are_private = True
         extra = "forbid"
-
-
-def build_userinfo_url(herre: Herre):
-    return (
-        f"{herre.base_url}/{herre.userinfo_path}/"
-        if herre.append_trailing_slash
-        else f"{herre.base_url}/{herre.userinfo_path}"
-    )

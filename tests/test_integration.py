@@ -3,12 +3,12 @@ from urllib.robotparser import RequestRate
 import requests
 import pytest
 from herre import Herre
-from herre.grants.backend.app import BackendGrant
+from herre.grants.oauth2.client_credentials import ClientCredentialsGrant
 from .integration.utils import wait_for_http_response
 from .utils import build_relative
 from testcontainers.compose import DockerCompose
 import subprocess
-
+from functools import cached_property
 
 class DockerV2Compose(DockerCompose):
 
@@ -70,11 +70,12 @@ def test_connection_again(environment):
 def test_connection_x(environment):
 
     client = Herre(
+        grant=ClientCredentialsGrant(
+
         base_url="http://localhost:8008/o",
-        grant=BackendGrant(),
         client_id="DSNwVKbSmvKuIUln36FmpWNVE2KrbS2oRX0ke8PJ",
-        client_secret="Gp3VldiWUmHgKkIxZjL2aEjVmNwnSyIGHWbQJo6bWMDoIUlBqvUyoGWUWAe6jI3KRXDOsD13gkYVCZR0po1BLFO9QT4lktKODHDs0GyyJEzmIjkpEOItfdCC4zIa3Qzu",
-        no_temp=True
+        client_secret="Gp3VldiWUmHgKkIxZjL2aEjVmNwnSyIGHWbQJo6bWMDoIUlBqvUyoGWUWAe6jI3KRXDOsD13gkYVCZR0po1BLFO9QT4lktKODHDs0GyyJEzmIjkpEOItfdCC4zIa3Qzu"),
+      
     )
     with client:
         token = client.get_token()

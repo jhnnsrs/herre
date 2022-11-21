@@ -2,16 +2,12 @@ import time
 
 import pytest
 from herre import Herre
-from herre.grants.test.app import MockGrant
-from koil.qt import QtKoil, QtRunner
+from koil.qt import QtRunner
+from koil.composition.qt import QtPedanticKoil
 from PyQt5 import QtWidgets, QtCore
-from herre.grants.windowed.app import LoginWrapper, WindowedGrant
-from herre import Herre, utils
-from herre.grants.backend.app import BackendGrant
-from herre.grants.code_server.app import AuthorizationCodeServerGrant
-from herre.grants.test.app import MockGrant
-from herre.grants.session import OAuth2Session
-from herre.types import User
+from herre.grants.oauth2.authorization_code_qt import LoginWrapper, AuthorizationCodeQtGrant
+from herre.grants.oauth2.session import OAuth2Session
+
 
 
 async def fake_token_generator(*args, **kwargs):
@@ -21,24 +17,18 @@ async def fake_token_generator(*args, **kwargs):
     }
 
 
-async def fake_user_generator(*args, **kwargs):
-    return User(sub="fake_user")
-
 
 class QtHerreWidget(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.koil = QtKoil(parent=self)
-        self.koil.enter()
 
-        self.grant = WindowedGrant()
+        self.grant = AuthorizationCodeQtGrant(base_url="http://localhost:8000/o",
+            client_id="UGqhHa2OS8NmTRjkVg8WKOWczYqkDVuK61yCueuO",
+            client_secret="3oosB6FoC2iGASI8tkN16S8mPtlIvhqetvG5EOOJcLkn3txggTRxdp35G23CkNmvEY6fQXIXHaSzTa9Jb5Rk1hxWx0Fey0iUeOv2ZN568Z9z14kUbUbm4QQ1nacUW1gD")
 
         self.herre = Herre(
-            base_url="http://localhost:8000/o",
+            koil=QtPedanticKoil(parent=self),
             grant=self.grant,
-            client_id="UGqhHa2OS8NmTRjkVg8WKOWczYqkDVuK61yCueuO",
-            client_secret="3oosB6FoC2iGASI8tkN16S8mPtlIvhqetvG5EOOJcLkn3txggTRxdp35G23CkNmvEY6fQXIXHaSzTa9Jb5Rk1hxWx0Fey0iUeOv2ZN568Z9z14kUbUbm4QQ1nacUW1gD",
-            no_temp=True,
         )
 
         self.herre.enter()
@@ -71,7 +61,6 @@ def test_fetch_from_windowed_grant(qtbot, monkeypatch):
     )
 
     monkeypatch.setattr(OAuth2Session, "fetch_token", fake_token_generator)
-    monkeypatch.setattr(WindowedGrant, "afetch_user", fake_user_generator)
 
     widget = QtHerreWidget()
     qtbot.addWidget(widget)

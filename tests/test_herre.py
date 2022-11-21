@@ -1,7 +1,8 @@
 from herre import Herre
-from herre.grants.test.app import MockGrant
+from herre.grants.mock import MockGrant
+import pytest
 
-
+@pytest.mark.asyncio
 async def test_mock_async():
 
     client = Herre(grant=MockGrant(), no_temp=True)
@@ -12,7 +13,7 @@ async def test_mock_async():
 
 def test_mock_sync():
 
-    client = Herre(grant=MockGrant(),  no_temp=True)
+    client = Herre(grant=MockGrant(), no_temp=True)
     with client:
         token = client.get_token()
         assert token, "No token retrieved"

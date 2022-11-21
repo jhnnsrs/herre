@@ -1,37 +1,31 @@
-import webbrowser
-from herre import Herre, utils
-from herre.grants.backend.app import BackendGrant
-from herre.grants.code_server.app import AuthorizationCodeServerGrant
-from herre.grants.test.app import MockGrant
-from herre.grants.session import OAuth2Session
-from herre.types import User
-from .utils import fake_token_generator, fake_user_generator
 
+from herre import Herre
+from herre.grants.oauth2.authorization_code_server import AuthorizationCodeServerGrant
+from herre.grants.mock import MockGrant
+from herre.grants.oauth2.session import OAuth2Session
+from .utils import fake_token_generator
+import pytest
 
 async def redirect_result(*args, **kwargs):
     return "path"
 
 
+@pytest.mark.asyncio
 async def test_code_server_mock_sync(monkeypatch):
 
     state = "soinsoisnosine"
     monkeypatch.setattr(
         OAuth2Session, "authorization_url", lambda self, t: ("xxxx", state)
     )
-    monkeypatch.setattr(
-        AuthorizationCodeServerGrant, "get_path_from_redirect", redirect_result
-    )
     monkeypatch.setattr(OAuth2Session, "fetch_token", fake_token_generator)
-    monkeypatch.setattr(
-        AuthorizationCodeServerGrant, "afetch_user", fake_user_generator
-    )
 
     x = Herre(
-        base_url="http://localhost:8000/o",
-        grant=AuthorizationCodeServerGrant(),
-        client_id="UGqhHa2OS8NmTRjkVg8WKOWczYqkDVuK61yCueuO",
-        client_secret="3oosB6FoC2iGASI8tkN16S8mPtlIvhqetvG5EOOJcLkn3txggTRxdp35G23CkNmvEY6fQXIXHaSzTa9Jb5Rk1hxWx0Fey0iUeOv2ZN568Z9z14kUbUbm4QQ1nacUW1gD",
-        no_temp=True,
+        grant=AuthorizationCodeServerGrant(
+            client_id="UGqhHa2OS8NmTRjkVg8WKOWczYqkDVuK61yCueuO",
+            client_secret="3oosB6FoC2iGASI8tkN16S8mPtlIvhqetvG5EOOJcLkn3txggTRxdp35G23CkNmvEY6fQXIXHaSzTa9Jb5Rk1hxWx0Fey0iUeOv2ZN568Z9z14kUbUbm4QQ1nacUW1gD",
+            redirect_waiter=redirect_result,
+            base_url="http://localhost:8000/o",
+        )
     )
 
     async with x:

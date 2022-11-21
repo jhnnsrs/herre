@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "herre"
-version = "0.2.9"
+version = "0.3.1"
 readme = "README.md"
-description = "openid connect client tailore to pyqt and async environments"
+description = "oauth2/openid client tailored to pyqt and async environments"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
 license = "CC BY-NC 3.0"
 packages = [{ include = "herre" }]
@@ -13,7 +13,7 @@ aiohttp = ">3.7.4"
 certifi = ">2021"
 oauthlib = "^3.1.1"
 pydantic = "^1.9.0"
-koil = "^0.2.6"
+koil = ">=0.2.10"
 
 
 fakts = { version = "^0.2.13", optional = true }
@@ -26,16 +26,14 @@ windowed = ["PyQtWebEngine"]
 fakts = ["fakts"]
 
 
-[tool.poetry.dev-dependencies]
-pytest = "^6.2.5"
-pytest-aiohttp = "^0.3.0"
-pytest-cov = "^3.0.0"
-black = "^21.12b0"
-pytest-qt = "^4.0.2"
+[tool.poetry.group.dev.dependencies]
+autoflake = "^1.7.7"
+pytest = "^7.2.0"
 PyQtWebEngine = "^5.15.5"
 PyQt5 = "^5.15.6"
-testcontainers = "^3.5.3"
-pydoc-markdown = "4.5.0"
+testcontainers = "^3.7.0"
+pytest-qt = "^4.2.0"
+pytest-asyncio = "^0.20.2"
 
 [tool.pytest.ini_options]
 qt_api = "pyqt5"
