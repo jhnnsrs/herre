@@ -13,14 +13,14 @@ from oauthlib.oauth2 import WebApplicationClient
 
 
 class LoginWrapper(QWebEngineView):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.name = self.page()
         self.redirect_uri = None
         self.show_coro = QtCoro(self.initialize)
         self.urlChanged.connect(self._interceptUrl)
 
-    def initialize(self, future: QtFuture, auth_url, redirect_uri):
+    def initialize(self, future: QtFuture, auth_url: str, redirect_uri: str):
         self.future = future
         self.redirect_uri = redirect_uri
         self.future = future
@@ -28,7 +28,7 @@ class LoginWrapper(QWebEngineView):
         self.setUrl(QtCore.QUrl(auth_url))
         self.show()
 
-    def _interceptUrl(self, url):
+    def _interceptUrl(self, url: QtCore.QUrl):
         url_string = bytes(url.toEncoded()).decode()
         if self.redirect_uri:
             if url_string.startswith(self.redirect_uri):
@@ -43,7 +43,7 @@ class AuthorizationCodeQtGrant(BaseOauth2Grant):
     redirect_timeout: int = 40
     login_wrapper: LoginWrapper = Field(default_factory=LoginWrapper)
 
-    async def afetch_token(self, force_refresh=False) -> Token:
+    async def afetch_token(self, force_refresh: bool =False) -> Token:
 
         redirect_uri = f"http://{self.redirect_host}:{self.redirect_port}"
 

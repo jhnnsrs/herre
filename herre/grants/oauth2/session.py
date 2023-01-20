@@ -96,6 +96,9 @@ class OAuth2Session(aiohttp.ClientSession):
             "protected_request": set(),
         }
 
+    async def __aenter__(self) -> "OAuth2Session":
+        return await super().__aenter__()
+
     def new_state(self):
         """Generates a state string to be used in authorizations."""
         try:

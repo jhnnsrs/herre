@@ -12,7 +12,7 @@ from .errors import Oauth2RedirectError
 logger = logging.getLogger(__name__)
 
 
-def build_authorize_url(grant: BaseOauth2Grant):
+def build_authorize_url(grant: BaseOauth2Grant) -> str:
     return (
         f"{grant.base_url}/{grant.authorize_path}/"
         if grant.append_trailing_slash
@@ -20,7 +20,7 @@ def build_authorize_url(grant: BaseOauth2Grant):
     )
 
 
-def build_token_url(grant: BaseOauth2Grant):
+def build_token_url(grant: BaseOauth2Grant)-> str:
     return (
         f"{grant.base_url}/{grant.token_path}/"
         if grant.append_trailing_slash
@@ -28,7 +28,7 @@ def build_token_url(grant: BaseOauth2Grant):
     )
 
 
-def build_refresh_url(grant: BaseOauth2Grant):
+def build_refresh_url(grant: BaseOauth2Grant)-> str:
     return (
         f"{grant.base_url}/{grant.refresh_path}/"
         if grant.append_trailing_slash
@@ -52,7 +52,8 @@ async def wait_for_redirect(
     timeout=400,
     print_function=False,
     handle_signals=False,
-):
+) -> str:
+    """ A simple webserver that will listen for a redirect from the OSF and return the path """
 
     token_future = asyncio.get_event_loop().create_future()
 

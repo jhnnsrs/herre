@@ -10,16 +10,27 @@ from herre.grants.oauth2.utils import (
 from .base import BaseOauth2Grant
 from typing import Callable, Awaitable
 from herre.types import Token
+from typing import Protocol, runtime_checkable
 
 logger = logging.getLogger(__name__)
 REDIRECT_PORT = 6767
+
+
+@runtime_checkable
+class RedirectWaiter(Protocol):
+    def __call__(self, starturl,
+    redirect_host="localhost",
+    redirect_port=6767,
+    path="/",
+    timeout=400) -> Awaitable[str]: ...
+
 
 
 class AuthorizationCodeServerGrant(BaseOauth2Grant):
     redirect_port: int = 6767
     redirect_timeout: int = 40
     redirect_host: str = "localhost"
-    redirect_waiter: Callable[[str, str, int], Awaitable[str]] = wait_for_redirect
+    redirect_waiter: RedirectWaiter = wait_for_redirect
     """ A simple webserver that will listen for a redirect from the OSF and return the path """
 
     async def afetch_token(self, force_refresh=True) -> Token:

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class BaseGrant(BaseModel):
 
     @abstractmethod
-    async def afetch_token(self, herre, **kwargs) -> Token:
+    async def afetch_token(self, force_refresh: bool =False) -> Token:
         raise NotImplementedError("Implement afetch_token")
 
     class Config:

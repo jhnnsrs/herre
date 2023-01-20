@@ -48,20 +48,20 @@ class CacheGrant(BaseGrant):
                         ):
                             cache = None
 
-                    if self.hash and cache.hash != self.hash:
+                    if cache and self.hash and cache.hash != self.hash:
                         cache = None
 
                 except pydantic.ValidationError as e:
                     logger.error(f"Could not load cache file: {e}. Ignoring it")
 
         if cache is None or force_refresh:
-            data = await self.grant.aload(force_refresh=force_refresh)
+            token = await self.grant.afetch_token(force_refresh=force_refresh)
             cache = CacheFile(
-                config=data,
+                token=token,
                 created=datetime.datetime.now(),
             )
 
         with open(self.cache_file, "w") as f:
             json.dump(json.loads(cache.json()), f)
 
-        return cache.config
+        return cache.token

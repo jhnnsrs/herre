@@ -17,7 +17,7 @@ from koil import koilable, Koil
 from koil.composition import KoiledModel
 from koil.helpers import unkoil
 
-current_herre = contextvars.ContextVar("current_herre")
+current_herre: contextvars.ContextVar["Herre"] = contextvars.ContextVar("current_herre")
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ class Herre(KoiledModel):
 
     no_temp: bool = False
 
-    _lock: asyncio.Lock = None
+    _lock: Optional[asyncio.Lock] = None
     _token: Optional[Token] = None
 
     @property
@@ -99,7 +99,7 @@ class Herre(KoiledModel):
         assert self._token is not None, "No token fetched"
         return self._token
 
-    async def aget_token(self, force_refresh=False):
+    async def aget_token(self, force_refresh: bool =False) -> str:
         """Get an access token
 
         This is a loop safe couroutine, that will return an access token if it is already available or
@@ -124,12 +124,13 @@ class Herre(KoiledModel):
                     )
                 await self.alogin(force_refresh=force_refresh)
 
+        assert self._token is not None, "We should have a token by now"
         return self._token.access_token
 
-    async def arefresh_token(self):
+    async def arefresh_token(self) -> str:
         return await self.aget_token(force_refresh=True)
 
-    async def alogin(self, force_refresh=False, retry=0):
+    async def alogin(self, force_refresh:bool =False, retry: int=0) -> Token:
         """Login Function
 
         Login is a compount function that will try to ensure a login following the following steps:
@@ -157,29 +158,28 @@ class Herre(KoiledModel):
         self._token = potential_token
         return self._token
 
-    async def alogout(self):
+    async def alogout(self) -> None:
         assert (
             self._lock is not None
         ), "We were not initialized. Please enter the context first"
 
         self._token = None
 
-    def login(self, force_refresh=False, retry=0, **kwargs):
+    def login(self, force_refresh:bool=False, retry: int=0) -> Token:
         return unkoil(
             self.alogin,
             force_refresh=force_refresh,
             retry=retry,
-            **kwargs,
         )
 
-    def get_token(self, *args, **kwargs):
-        return unkoil(self.aget_token, *args, **kwargs)
+    def get_token(self, force_refresh: bool =False) -> str:
+        return unkoil(self.aget_token, force_refresh=force_refresh)
 
-    def logout(self, **kwargs):
-        return unkoil(self.alogout, **kwargs)
+    def logout(self) -> None:
+        return unkoil(self.alogout)
 
     @property
-    def logged_in(self):
+    def logged_in(self) -> bool:
         return self._token is not None
 
     async def __aenter__(self):
@@ -196,6 +196,10 @@ class Herre(KoiledModel):
         if self.logout_on_exit:
             await self.alogout()
         current_herre.set(None)
+
+    
+    def _repr_html_inline_(self):
+        return f"<table><tr><td>auto_login</td><td>{self.auto_login}</td></tr></table>"
 
     class Config:
         underscore_attrs_are_private = True

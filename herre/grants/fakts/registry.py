@@ -1,4 +1,4 @@
-from typing import Dict, Type
+from typing import Dict, Type, Optional
 
 from pydantic import BaseModel, Field
 from herre.grants.base import BaseGrant
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class GrantRegistry(BaseModel):
-    _registered_grants: Dict[GrantType, Type[BaseGrant]] = None
+    _registered_grants: Optional[Dict[GrantType, Type[BaseGrant]]] = None
 
     def register_grant(self, type: GrantType, grant: Type[BaseGrant]):
         if not self._registered_grants:

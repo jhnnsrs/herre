@@ -62,7 +62,7 @@ class RefreshGrant(BaseGrant):
 
     grant: BaseOauth2Grant
 
-    _token: Token = None
+    _token: Optional[Token] = None
 
     async def afetch_token(self, force_refresh: bool = False) -> Token:
         """Fetches a token from the oauth2 provider.
