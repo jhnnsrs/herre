@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class Herre(KoiledModel):
     """Herre is a client for Token authentication.
 
-    It provides a unified, compsoable interface for token based authentication based on grant.
+    It provides a unified, composable interface for token based authentication based on grant.
     A grant is a class that is able to retrieve a token. Importantly grants do not have to
     directly call the token endpoint. They can also use a cache or other means to retrieve the
     token.

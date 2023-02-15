@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class FaktsQtLoginScreen(QtLoginScreen):
     userinfo_endpoint: Optional[str]
-    fakts_group: str = "herre"
+    fakts_group: str = "lok"
     fakts: Optional[Fakts] = None
 
     _userinfo_endpoint = None
@@ -22,7 +22,7 @@ class FaktsQtLoginScreen(QtLoginScreen):
     async def aget_userinfo_endpoint(self) -> str:
         fakts = get_current_fakts()
         unserialized = await fakts.aget(self.fakts_group)
-        self.userinfo_endpoint = unserialized["userinfo_endpoint"]
+        self.userinfo_endpoint = unserialized["base_url"] + "/me/"
 
 
 

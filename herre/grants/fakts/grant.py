@@ -28,7 +28,7 @@ class FaktsGrant(BaseOauth2Grant):
     base_url: Optional[str] = None
     grant: Optional[BaseGrant] = None
     grant_registry: GrantRegistry = Field(default_factory=get_default_grant_registry)
-    fakts_group: str = "herre"
+    fakts_group: str = "lok"
     allow_reconfiguration_on_invalid_client: bool = True
 
     _configured = False
@@ -45,6 +45,7 @@ class FaktsGrant(BaseOauth2Grant):
 
         if fakts.has_changed(self._old_fakt, self.fakts_group):
             self._old_fakt = await fakts.aget(self.fakts_group)
+            print(self._old_fakt)
             self.configure(HerreFakt(**self._old_fakt))
 
         try:
