@@ -8,7 +8,7 @@ from herre.grants.oauth2.utils import (
     wait_for_redirect,
 )
 from .base import BaseOauth2Grant
-from typing import Callable, Awaitable
+from typing import Awaitable
 from herre.types import Token
 from typing import Protocol, runtime_checkable
 

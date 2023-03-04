@@ -1,12 +1,7 @@
 from abc import abstractmethod
-from ssl import SSLContext
-import ssl
-import certifi
 
-from pydantic import BaseModel, Field
-from herre.types import GrantType, Token
-from typing import Any, List
-from abc import ABC
+from pydantic import BaseModel
+from herre.types import Token
 import logging
 
 logger = logging.getLogger(__name__)

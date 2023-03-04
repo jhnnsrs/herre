@@ -1,5 +1,3 @@
-from urllib.robotparser import RequestRate
-from urllib.robotparser import RequestRate
 import requests
 import pytest
 from herre import Herre
@@ -47,7 +45,7 @@ def environment():
     with DockerV2Compose(
         filepath=build_relative("integration"),
         compose_file_name="docker-compose.yaml",
-    ) as compose:
+    ):
         wait_for_http_response("http://localhost:8008/ht", max_retries=5)
         yield
 

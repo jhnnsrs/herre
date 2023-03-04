@@ -1,6 +1,6 @@
 from typing import Dict, Type, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from herre.grants.base import BaseGrant
 from herre.types import GrantType
 import logging
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class GrantRegistry(BaseModel):
     _registered_grants: Optional[Dict[GrantType, Type[BaseGrant]]] = None
 
-    def register_grant(self, type: GrantType, grant: Type[BaseGrant]):
+    def register_grant(self, type: GrantType, grant: Type[BaseGrant]) -> None:
         if not self._registered_grants:
             self._registered_grants = {}
         assert hasattr(
@@ -20,7 +20,7 @@ class GrantRegistry(BaseModel):
         ), f"Grant {grant}must implement afetchtoken"
         self._registered_grants[type] = grant
 
-    def get_grant_for_type(self, type):
+    def get_grant_for_type(self, type) -> Type[BaseGrant]:
         return self._registered_grants[type]
 
     class Config:
@@ -44,11 +44,15 @@ def get_default_grant_registry():
     if not GRANT_REGISTRY:
         GRANT_REGISTRY = GrantRegistry()
         from herre.grants.oauth2.client_credentials import ClientCredentialsGrant
-        from herre.grants.oauth2.authorization_code_server import AuthorizationCodeServerGrant
+        from herre.grants.oauth2.authorization_code_server import (
+            AuthorizationCodeServerGrant,
+        )
 
         GRANT_REGISTRY.register_grant(
             GrantType.AUTHORIZATION_CODE, AuthorizationCodeServerGrant
         )
-        GRANT_REGISTRY.register_grant(GrantType.CLIENT_CREDENTIALS, ClientCredentialsGrant)
+        GRANT_REGISTRY.register_grant(
+            GrantType.CLIENT_CREDENTIALS, ClientCredentialsGrant
+        )
 
     return GRANT_REGISTRY

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "herre"
-version = "0.3.8"
+version = "0.3.11"
 readme = "README.md"
 description = "oauth2/openid client tailored to pyqt and async environments"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
@@ -12,13 +12,10 @@ python = "^3.7"
 aiohttp = ">3.7.4"
 certifi = ">2021"
 oauthlib = "^3.1.1"
-pydantic = "^1.9.0"
-koil = ">=0.2.10"
-
-
+pydantic = ">=1.9.0"
+koil = ">=0.2.11"
 fakts = { version = "^0.2.13", optional = true }
 QtPy = { version = "^2.0.1", optional = true }
-
 
 [tool.poetry.extras]
 qt = ["QtPy"]
@@ -26,15 +23,56 @@ windowed = ["PyQtWebEngine"]
 fakts = ["fakts"]
 
 
+[tool.mypy]
+exclude = [
+    "venv/"
+]
+ignore_missing_imports = true
+
+
+[tool.ruff]
+extend-select = ["ANN", "D1"]
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+
+# Same as Black.
+line-length = 100
+
 [tool.poetry.group.dev.dependencies]
+testcontainers = "3.7.0"
 autoflake = "^1.7.7"
 pytest = "^7.2.0"
-PyQtWebEngine = "^5.15.5"
-PyQt5 = "^5.15.6"
-testcontainers = "^3.7.0"
+aiohttp = "^3.8.3"
+black = "^23.1.0"
+pytest-cov = "^4.0.0"
+pytest-aiohttp = "^1.0.4"
+ruff = "^0.0.254"
+mypy = "^1.0.1"
 pytest-qt = "^4.2.0"
-pytest-asyncio = "^0.20.2"
-mypy = "^0.991"
+pyqt5 = "^5.15.9"
+pyqtwebengine = "^5.15.6"
 
 [tool.pytest.ini_options]
 qt_api = "pyqt5"
@@ -56,10 +94,6 @@ search_path = ["herre"]
 type = "docusaurus"
 docs_base_path = "website/docs"
 
-
-[tool.mypy]
-warn_return_any = true
-warn_unused_configs = true
 
 
 [[tool.mypy.overrides]]

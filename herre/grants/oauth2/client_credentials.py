@@ -1,5 +1,4 @@
 import aiohttp
-from pydantic import Field
 from herre.grants.oauth2.base import BaseOauth2Grant
 from herre.grants.oauth2.session import OAuth2Session
 from herre.types import Token
@@ -7,7 +6,6 @@ import aiohttp
 from oauthlib.oauth2.rfc6749.clients.backend_application import BackendApplicationClient
 from herre.grants.oauth2.session import OAuth2Session
 from herre.grants.oauth2.utils import build_token_url
-from herre.herre import Herre
 from herre.types import Token
 
 

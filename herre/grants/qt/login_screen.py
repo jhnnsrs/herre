@@ -1,14 +1,11 @@
-from abc import abstractmethod
-from ssl import SSLContext
 import ssl
 import certifi
 
 from herre.grants.base import BaseGrant
-from herre.types import GrantType, Token
-from typing import Any, List, Optional, Dict
-from abc import ABC
+from herre.types import Token
+from typing import List, Optional, Dict
 import logging
-from qtpy import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore
 from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 from koil.qt import QtCoro, QtFuture
@@ -17,7 +14,6 @@ import asyncio
 import aiohttp
 from herre.grants.errors import GrantException
 import json
-import requests
 
 class User(BaseModel):
     username: str
@@ -67,7 +63,7 @@ class UserWidget(QtWidgets.QWidget):
 class LoginWidget(QtWidgets.QDialog):
 
 
-    def __init__(self, identifier, version, *args, **kwargs):
+    def __init__(self, identifier, version, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.settings = QtCore.QSettings("Arkitekt", f"{identifier}:{version}")
         
@@ -199,7 +195,7 @@ class QtLoginScreen(BaseGrant):
 
                 if resp.status == 200:
                     data = await resp.json()
-                    if not "username" in data:
+                    if "username" not in data:
                         logger.error(f"Malformed answer: {data}")
                         raise MalformedAnswerException("Malformed Answer")
 

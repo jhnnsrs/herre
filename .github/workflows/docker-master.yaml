@@ -9,8 +9,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9]
-        poetry-version: [1.1.4]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        poetry-version: [1.4]
         os: [macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -25,15 +25,13 @@ jobs:
       - name: Run Poetry Install
         run: poetry install
       - name: Run Tests
-        run: poetry run pytest --cov --cov-report=xml -k "not integration"
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        run: poetry run pytest --cov --cov-report=xml  -k "not integration"
   linux_unit:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9]
-        poetry-version: [1.1.4]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        poetry-version: [1.4]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -56,13 +54,13 @@ jobs:
         env:
           QT_DEBUG_PLUGINS: 1
           DISPLAY: ":99.0"
-        run: xvfb-run `which poetry` run pytest --cov --cov-report=xml -k "not integration"
+        run: xvfb-run `which poetry` run pytest --cov --cov-report=xml  -k "not integration"
   linux_integration:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9]
-        poetry-version: [1.1.4]
+        python-version: [3.9]
+        poetry-version: [1.4]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:

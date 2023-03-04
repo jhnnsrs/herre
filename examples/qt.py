@@ -1,12 +1,12 @@
 import sys
 from qtpy import QtWidgets
 from koil.qt import QtKoil, QtTask
-from herre.grants.windowed.app import LoginWrapper, WindowedGrant
+from herre.grants.windowed.app import WindowedGrant
 from herre import Herre
 
 
 class QtHerreWidget(QtWidgets.QWidget):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.koil = QtKoil()
 
