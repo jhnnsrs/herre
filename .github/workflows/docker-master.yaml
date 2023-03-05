@@ -55,7 +55,7 @@ jobs:
         env:
           QT_DEBUG_PLUGINS: 1
           DISPLAY: ":99.0"
-        run: xvfb-run `which poetry` run pytest --cov --cov-report=xml  -k "not integration"
+        run: poetry run pytest --cov --cov-report=xml  -k "not integration"
   linux_integration:
     strategy:
       fail-fast: false
