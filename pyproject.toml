@@ -24,9 +24,7 @@ fakts = ["fakts"]
 
 
 [tool.mypy]
-exclude = [
-    "venv/"
-]
+exclude = ["venv/"]
 ignore_missing_imports = true
 
 
@@ -71,8 +69,8 @@ pytest-aiohttp = "^1.0.4"
 ruff = "^0.0.254"
 mypy = "^1.0.1"
 pytest-qt = "^4.2.0"
-pyqt5 = "^5.15.9"
-pyqtwebengine = "^5.15.6"
+pyqt5 = "^5.15.2"
+pyqtwebengine = "^5.15.2"
 
 [tool.pytest.ini_options]
 qt_api = "pyqt5"
@@ -93,7 +91,6 @@ search_path = ["herre"]
 [tool.pydoc-markdown.renderer]
 type = "docusaurus"
 docs_base_path = "website/docs"
-
 
 
 [[tool.mypy.overrides]]
