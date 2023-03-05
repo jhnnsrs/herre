@@ -1634,4 +1634,4 @@ windowed = []
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7"
-content-hash = "cdd3d03ed45f29936b63ef38f70a65da4aa521efaf7478bf25f54747f38c3bc0"
+content-hash = "106ae895ba8f7a28afc0e0ae5b4c8b60f651cfbe53e59d6d3f872c7f12775b94"
