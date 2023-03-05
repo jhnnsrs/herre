@@ -30,6 +30,7 @@ ignore_missing_imports = true
 
 [tool.ruff]
 extend-select = ["ANN", "D1"]
+ignore = ["ANN101", "D107", "D106", "ANN002", "ANN003"]
 
 # Exclude a variety of commonly ignored directories.
 exclude = [
@@ -53,6 +54,7 @@ exclude = [
     "dist",
     "node_modules",
     "venv",
+    "tests",
 ]
 
 # Same as Black.
