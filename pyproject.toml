@@ -69,10 +69,6 @@ pytest-aiohttp = "^1.0.4"
 ruff = "^0.0.254"
 mypy = "^1.0.1"
 pytest-qt = "^4.2.0"
-pyqt5 = "^5.15.2"
-pyqtwebengine = "^5.15.2"
-pyqt5-qt5 = "^5.15.2"
-pyqt5-sip = "^12.11.1"
 
 [tool.pytest.ini_options]
 qt_api = "pyqt5"
