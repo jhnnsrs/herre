@@ -1,14 +1,11 @@
-from abc import abstractmethod
-from ssl import SSLContext
 import ssl
 import certifi
 
 from herre.grants.base import BaseGrant
-from herre.types import GrantType, Token
-from typing import Any, List, Optional, Dict
-from abc import ABC
+from herre.types import Token
+from typing import List, Optional, Dict
 import logging
-from qtpy import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore
 from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 from koil.qt import QtCoro, QtFuture
@@ -17,7 +14,6 @@ import asyncio
 import aiohttp
 from herre.grants.errors import GrantException
 import json
-import requests
 
 class User(BaseModel):
     username: str
@@ -67,7 +63,7 @@ class UserWidget(QtWidgets.QWidget):
 class LoginWidget(QtWidgets.QDialog):
 
 
-    def __init__(self, identifier, version, *args, **kwargs):
+    def __init__(self, identifier, version, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.settings = QtCore.QSettings("Arkitekt", f"{identifier}:{version}")
         
@@ -103,7 +99,7 @@ class LoginWidget(QtWidgets.QDialog):
     def start_select_user(self, future: QtFuture):
         self._future = future
 
-    def store_user(self, userStore: UserStore):
+    def store_user(self, userStore: UserStore) -> None:
         un_storage = self.settings.value("userstore", None)
         if un_storage:
             storage = Storage(**json.loads(un_storage))
@@ -114,7 +110,7 @@ class LoginWidget(QtWidgets.QDialog):
         self.settings.setValue("userstore", storage.json())
         self.refresh_users()
 
-    def delete_user(self, userStore: UserStore):
+    def delete_user(self, userStore: UserStore) -> None:
         un_storage = self.settings.value("userstore", None)
         if un_storage:
             storage = Storage(**json.loads(un_storage))
@@ -131,7 +127,7 @@ class LoginWidget(QtWidgets.QDialog):
         storage = Storage(**json.loads(un_storage))
         return [userstore for userstore in storage.users.values()]
 
-    def clearLayout(self, layout):
+    def clearLayout(self, layout) -> None:
         while layout.count():
             child = layout.takeAt(0)
             if child.widget():
@@ -154,11 +150,11 @@ class LoginWidget(QtWidgets.QDialog):
             self._future.reject(UserCancelledError("The user cancelled the login"))
         return super().close()
 
-    def on_new_user_clicked(self):
+    def on_new_user_clicked(self) -> None:
         if self._future:
             self._future.resolve()
 
-    def on_user_clicked(self, user: UserStore):
+    def on_user_clicked(self, user: UserStore) -> None:
         if self._future:
             self._future.resolve(user)
 
@@ -168,18 +164,37 @@ class LoginWidget(QtWidgets.QDialog):
 
 
 class FetchingUserException(GrantException):
+    """A base exception for errors that occur while fetching a user.
+
+    Args:
+        GrantException (_type_): _description_
+    """
     pass
 
 class MalformedAnswerException(FetchingUserException):
+    """Raised when the answer from the userinfo endpoint is malformed."""
     pass
 
 
 
 class QtLoginScreen(BaseGrant):
+    """A grant that uses a Qt login screen to authenticate the user.
+
+    The user is presented with a login screen that allows them to select a user
+    from a list of previously logged in users. If the user is not in the list,
+    they can click a button to start the login flow.
+
+
+    """
+
     grant: BaseGrant
+    """The grant to use for the login flow."""
     userinfo_endpoint: str
+    """The endpoint to use for fetching the user info."""
     widget: LoginWidget
+    """The widget to use for the login screen."""
     auto_login: bool = False
+    """If true, the user will be automatically logged in if there is only one user in the list."""
     ssl_context: ssl.SSLContext = Field(
         default_factory=lambda: ssl.create_default_context(cafile=certifi.where()),
         exclude=True,
@@ -199,7 +214,7 @@ class QtLoginScreen(BaseGrant):
 
                 if resp.status == 200:
                     data = await resp.json()
-                    if not "username" in data:
+                    if "username" not in data:
                         logger.error(f"Malformed answer: {data}")
                         raise MalformedAnswerException("Malformed Answer")
 
@@ -211,6 +226,21 @@ class QtLoginScreen(BaseGrant):
 
 
     async def afetch_token(self, force_refresh: bool =False) -> Token:
+        """Fetches the token
+
+        This function will only delegate to the grant if the user has not
+        previously logged in (aka there is no token in the storage) Or if the
+        force_refresh flag is set.
+
+        Args:
+            force_refresh (bool, optional): _description_. Defaults to False.
+
+        Raises:
+            e: _description_
+
+        Returns:
+            Token: _description_
+        """
 
         try:
             await self.widget.show_coro.acall()

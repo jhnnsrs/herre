@@ -34,13 +34,15 @@ from herre import Herre
 from herre.grants.oauth2.authorization_code_server import AuthorizationCodeServer
 
 client = Herre(
-    grant=AuthorizationCodeServerGrant(base_url="https://your_server/oauth_path",
-    client_id="$YOUR_CLIENT_ID",
-    client_secret="$YOUR_CLIENT_SECRET",)
-)
+      grant=ClientCredentialsGrant(
+          base_url="http://localhost:8000/o",
+          client_id="YOUR_CLIENT_ID",
+          client_secret="YOUR_CLIENT_SECRET",
+      ),
+  )
 
-with client:
-  client.login()
+with client as c:
+  c.get_token()
 
 ```
 
@@ -49,14 +51,14 @@ Async usage
 ```python
 
 client = Herre(
-    grant=AuthorizationCodeServerGrant(base_url="https://your_server/oauth_path",
-    client_id="$YOUR_CLIENT_ID",
-    client_secret="$YOUR_CLIENT_SECRET",
-    redirect_uri="http://localhost:6767)
-)
+    grant=ClientCredentialsGrant(
+          base_url="http://localhost:8000/o",
+          client_id="YOUR_CLIENT_ID",
+          client_secret="YOUR_CLIENT_SECRET",
+      ),
 
 async with client as c:
-  await c.login()
+    token = await c.get_token()
 
 ```
 
@@ -64,9 +66,26 @@ async with client as c:
 
 Herre grants provide a simple interface to be composable and enable caching, or support for refresh tokens:
 
+Enabling Caching the token until its expiration (or until the cache is cleared)
+
 ```python
 client = Herre(
     grant=CacheGrant(
+      grant=AuthorizationCodeServerGrant(base_url="https://your_server/oauth_path",
+          client_id="$YOUR_CLIENT_ID",
+          client_secret="$YOUR_CLIENT_SECRET",
+          redirect_uri="http://localhost:6767")
+))
+
+async with client:
+  await client.login()
+```
+
+Enabling refresh tokens:
+
+```python
+client = Herre(
+    grant=RefreshGrant(
       grant=AuthorizationCodeServerGrant(base_url="https://your_server/oauth_path",
           client_id="$YOUR_CLIENT_ID",
           client_secret="$YOUR_CLIENT_SECRET",
@@ -99,7 +118,11 @@ class MainWindow(QtWidget)
 
 
     def login()
-        self.herre.login()
+        t = self.herre.get_token()
+
+
+    def refresh_token():
+        t = self.herre.refresh_token()
 ```
 
 ## Build with

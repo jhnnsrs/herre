@@ -2,7 +2,7 @@ from .base import BaseOauth2Grant
 from herre.grants.base import BaseGrant
 import aiohttp
 import ssl
-from typing import Optional, Union
+from typing import Optional
 from herre.types import Token
 from .utils import build_refresh_url
 import logging
@@ -90,7 +90,7 @@ class RefreshGrant(BaseGrant):
                         ssl_context=self.grant.ssl_context,
                     )
                     return self._token
-                except Exception as e:
+                except Exception:
                     logger.debug("Could not refresh token. Fetching new one")
                     pass
 

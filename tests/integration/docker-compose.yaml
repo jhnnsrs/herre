@@ -1,18 +1,22 @@
 version: "3.4"
 
 services:
-  daten:
+  redis:
+    image: redis:latest
+  db:
     image: jhnnsrs/daten:prod
     restart: always
     environment:
-      POSTGRES_MULTIPLE_DATABASES: herre_db, mikro_db
+      POSTGRES_MULTIPLE_DATABASES: lok_db, mikro_db
       POSTGRES_PASSWORD: hello_django
       POSTGRES_USER: hello_django
   herre:
-    image: jhnnsrs/herre:prod
+    image: jhnnsrs/lok:prod
+    command: bash run-debug.sh
     volumes:
-      - ./herre.yaml:/workspace/config.yaml
+      - ./lok.yaml:/workspace/config.yaml
     ports:
       - 8008:8000
     depends_on:
-      - daten
+      - db
+      - redis

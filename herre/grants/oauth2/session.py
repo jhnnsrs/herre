@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)  # pylint: disable=invalid-name
 class TokenUpdated(Warning):
     """Exception."""
 
-    def __init__(self, token):
+    def __init__(self, token) -> None:
         super(TokenUpdated, self).__init__()
         self.token = token
 
@@ -48,7 +48,7 @@ class OAuth2Session(aiohttp.ClientSession):
         state=None,
         token_updater=None,
         **kwargs
-    ):
+    ) -> None:
         """Construct a new OAuth 2 client session.
         :param client_id: Client id obtained during registration
         :param client: :class:`oauthlib.oauth2.Client` to be used. Default is

@@ -1,19 +1,11 @@
 import asyncio
-from optparse import Option
-from re import L
-from typing import List, Optional
-import aiohttp
-import oauthlib.oauth2.rfc6749.errors
-from pydantic import BaseModel, Field, SecretStr
-from herre.errors import ConfigurationException, HerreError, LoginException
+from typing import Optional, TypeVar
+from herre.errors import HerreError
 from herre.grants.base import BaseGrant
 import os
 import logging
 from herre.types import Token
-import shelve
 import contextvars
-import os
-from koil import koilable, Koil
 from koil.composition import KoiledModel
 from koil.helpers import unkoil
 
@@ -21,6 +13,7 @@ current_herre: contextvars.ContextVar["Herre"] = contextvars.ContextVar("current
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
 
 class Herre(KoiledModel):
     """Herre is a client for Token authentication.
@@ -69,11 +62,6 @@ class Herre(KoiledModel):
             token = await herre.get_token()
         ```
 
-
-
-
-
-
     """
 
     grant: BaseGrant
@@ -93,16 +81,17 @@ class Herre(KoiledModel):
 
     @property
     def token(self) -> Token:
+        "The current token"
         assert (
             self._lock is not None
         ), "Please enter the context first to access this variable"
         assert self._token is not None, "No token fetched"
         return self._token
 
-    async def aget_token(self, force_refresh: bool =False) -> str:
+    async def aget_token(self, force_refresh: bool = False) -> str:
         """Get an access token
 
-        This is a loop safe couroutine, that will return an access token if it is already available or
+        Will return an access token if it is already available or
         try to login depending on auto_login. The checking and potential retrieving will happen
         in a lock ensuring that not multiple requests are happening at the same time.
 
@@ -128,26 +117,23 @@ class Herre(KoiledModel):
         return self._token.access_token
 
     async def arefresh_token(self) -> str:
+        """Refresh the token
+
+        Will try to refresh the token. If the token is not refreshable, it will try to login again.
+        """
         return await self.aget_token(force_refresh=True)
 
-    async def alogin(self, force_refresh:bool =False, retry: int=0) -> Token:
-        """Login Function
+    async def alogin(self, force_refresh: bool = False) -> Token:
+        """Async Login 
 
-        Login is a compount function that will try to ensure a login following the following steps:
-
-        1. Set the current state to none (if not already set)
-        2. Try to load the token from the token file (and check its validity)
-        3. If the token is not valid or force_refresh is true, try to refresh the token.
-        4. If the grant is a user grant (indicated on the grantclass) make a request to the userinfo endpoint and check update the state with user information
-        5. Returns the state
+        Login the client. This will try to login the client and set the token. If the token is
+        not refreshable, it will try to login again.
 
         Args:
-            force_refresh (bool, optional): [description]. Defaults to False.
-            retry (int, optional): [description]. Defaults to 0.
+            force_refresh (bool, optional): Should we tell grants to refresh . Defaults to False.
 
         Raises:
-            Exception: [description]
-            Exception: [description]
+            AssertionError: If we are not initialized
 
         """
         assert (
@@ -159,30 +145,59 @@ class Herre(KoiledModel):
         return self._token
 
     async def alogout(self) -> None:
+        """Logout 
+
+        Logout will set the current state to none and delete the token file.
+        """
         assert (
             self._lock is not None
         ), "We were not initialized. Please enter the context first"
 
         self._token = None
 
-    def login(self, force_refresh:bool=False, retry: int=0) -> Token:
+    def login(self, force_refresh: bool = False, retry: int = 0) -> Token:
+        """Login
+
+        Login the client. This will try to login the client and set the token. If the token is
+        not refreshable, it will try to login again.
+
+        Args:
+            force_refresh (bool, optional): Should we tell grants to refresh . Defaults to False.
+
+        Raises:
+            AssertionError: If we are not initialized
+
+        """
         return unkoil(
             self.alogin,
             force_refresh=force_refresh,
             retry=retry,
         )
 
-    def get_token(self, force_refresh: bool =False) -> str:
+    def get_token(self, force_refresh: bool = False) -> str:
+        """Get an access token
+
+        Will return an access token if it is already available or
+        try to login depending on auto_login. The checking and potential retrieving will happen
+        in a lock ensuring that not multiple requests are happening at the same time.
+        """
         return unkoil(self.aget_token, force_refresh=force_refresh)
 
     def logout(self) -> None:
+        """Logout 
+        
+        Logout will set the current state to none and delete the token file.
+        """
         return unkoil(self.alogout)
 
     @property
     def logged_in(self) -> bool:
+        """Is the client logged in
+        """
         return self._token is not None
 
-    async def __aenter__(self):
+    async def __aenter__(self: T) -> T:
+        """ Enters the context and logs in if needed"""
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "0" if self.allow_insecure else "1"
         self._lock = asyncio.Lock()
         current_herre.set(self)
@@ -191,16 +206,18 @@ class Herre(KoiledModel):
         self.entered = True
         return self
 
-    async def __aexit__(self, *args, **kwargs):
+    async def __aexit__(self, *args, **kwargs) -> None:
+        """Exits the context and logs out if needed"""
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "0"
         if self.logout_on_exit:
             await self.alogout()
         current_herre.set(None)
 
-    
-    def _repr_html_inline_(self):
+    def _repr_html_inline_(self) -> str:
+        """ Jupyter inline representation """
         return f"<table><tr><td>auto_login</td><td>{self.auto_login}</td></tr></table>"
 
     class Config:
+        
         underscore_attrs_are_private = True
         extra = "forbid"

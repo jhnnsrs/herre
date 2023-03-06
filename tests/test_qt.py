@@ -1,4 +1,3 @@
-import time
 
 import pytest
 from herre import Herre
@@ -19,7 +18,7 @@ async def fake_token_generator(*args, **kwargs):
 
 
 class QtHerreWidget(QtWidgets.QWidget):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
         self.grant = AuthorizationCodeQtGrant(base_url="http://localhost:8000/o",
@@ -65,5 +64,5 @@ def test_fetch_from_windowed_grant(qtbot, monkeypatch):
     widget = QtHerreWidget()
     qtbot.addWidget(widget)
     # click in the Greet button and make sure it updates the appropriate label
-    with qtbot.waitSignal(widget.login_task.returned) as b:
+    with qtbot.waitSignal(widget.login_task.returned):
         qtbot.mouseClick(widget.button_greet, QtCore.Qt.LeftButton)

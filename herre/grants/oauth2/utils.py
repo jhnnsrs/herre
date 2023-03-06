@@ -1,10 +1,7 @@
 from .base import BaseOauth2Grant
-from enum import Enum
-from urllib.parse import quote
 from aiohttp import web
 import asyncio
 import webbrowser
-import uuid
 import logging
 from .errors import Oauth2RedirectError
 

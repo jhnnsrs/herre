@@ -1,3 +1,4 @@
+from typing import Optional
 import aiohttp
 from pydantic import Field
 from herre.grants.oauth2.base import BaseOauth2Grant
@@ -13,6 +14,8 @@ from oauthlib.oauth2 import WebApplicationClient
 
 
 class LoginWrapper(QWebEngineView):
+    redirect_uri: Optional[str] = None
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.name = self.page()
@@ -20,7 +23,7 @@ class LoginWrapper(QWebEngineView):
         self.show_coro = QtCoro(self.initialize)
         self.urlChanged.connect(self._interceptUrl)
 
-    def initialize(self, future: QtFuture, auth_url: str, redirect_uri: str):
+    def initialize(self, future: QtFuture, auth_url: str, redirect_uri: str) -> None:
         self.future = future
         self.redirect_uri = redirect_uri
         self.future = future
@@ -43,8 +46,7 @@ class AuthorizationCodeQtGrant(BaseOauth2Grant):
     redirect_timeout: int = 40
     login_wrapper: LoginWrapper = Field(default_factory=LoginWrapper)
 
-    async def afetch_token(self, force_refresh: bool =False) -> Token:
-
+    async def afetch_token(self, force_refresh: bool = False) -> Token:
         redirect_uri = f"http://{self.redirect_host}:{self.redirect_port}"
 
         web_app_client = WebApplicationClient(
@@ -59,7 +61,6 @@ class AuthorizationCodeQtGrant(BaseOauth2Grant):
             redirect_uri=redirect_uri,
             connector=aiohttp.TCPConnector(ssl=self.ssl_context),
         ) as session:
-
             auth_url, state = session.authorization_url(build_authorize_url(self))
 
             path = await self.login_wrapper.show_coro.acall(auth_url, redirect_uri)

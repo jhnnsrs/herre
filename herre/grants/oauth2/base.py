@@ -1,6 +1,6 @@
 from herre.grants.base import BaseGrant
 from pydantic import SecretStr, Field
-from typing import Optional, List
+from typing import List
 import ssl
 import certifi
 from ssl import SSLContext

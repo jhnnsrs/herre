@@ -1,6 +1,5 @@
 from herre import Herre
 from herre.grants.oauth2.client_credentials import ClientCredentialsGrant
-from herre.grants.mock import MockGrant
 from herre.grants.oauth2.session import OAuth2Session
 from .utils import fake_token_generator
 import pytest

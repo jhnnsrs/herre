@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Any, Dict, List, Optional
 from fakts import get_current_fakts
 from pydantic import BaseModel, Field, SecretStr
@@ -32,7 +31,7 @@ class FaktsGrant(BaseOauth2Grant):
     allow_reconfiguration_on_invalid_client: bool = True
 
     _configured = False
-    _activegrant = None
+    _activegrant: Optional[BaseGrant] = None
     _old_fakt: Dict[str, Any] = {}
 
     def configure(self, fakt: HerreFakt) -> None:
@@ -52,7 +51,6 @@ class FaktsGrant(BaseOauth2Grant):
             return await self._activegrant.afetch_token(force_refresh=force_refresh)
         except InvalidClientError as e:
             if self.allow_reconfiguration_on_invalid_client:
-
                 self._old_fakt = await fakts.aget(self.fakts_group, force_refresh=True)
                 self.configure(HerreFakt(**self._old_fakt))
                 return await self._activegrant.afetch_token(force_refresh=True)

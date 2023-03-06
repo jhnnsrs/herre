@@ -15,7 +15,7 @@ def wait_for_http_response(url, status_code=200, retry=0, max_retries=10):
         response = requests.get(url)
         assert response.status_code == status_code, "Did not get expected response code"
         return response
-    except (ConnectionResetError, AssertionError, ConnectionError) as c:
+    except (ConnectionResetError, AssertionError, ConnectionError):
         return wait_for_http_response(
             url, status_code, retry + 1, max_retries=max_retries
         )
