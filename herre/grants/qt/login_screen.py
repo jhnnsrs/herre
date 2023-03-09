@@ -1,7 +1,7 @@
 import ssl
 import certifi
 
-from herre.grants.base import BaseGrant
+from herre.grants.base import BaseGrant, BaseGrantProtocol
 from herre.types import Token
 from typing import List, Optional, Dict
 import logging
@@ -187,7 +187,7 @@ class QtLoginScreen(BaseGrant):
 
     """
 
-    grant: BaseGrant
+    grant: BaseGrantProtocol
     """The grant to use for the login flow."""
     userinfo_endpoint: str
     """The endpoint to use for fetching the user info."""
@@ -210,7 +210,6 @@ class QtLoginScreen(BaseGrant):
                 f"{self.userinfo_endpoint}",
             ) as resp:
                 data = await resp.json()
-                print(data)
 
                 if resp.status == 200:
                     data = await resp.json()

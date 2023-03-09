@@ -1,5 +1,5 @@
 from .base import BaseOauth2Grant
-from herre.grants.base import BaseGrant
+from herre.grants.base import BaseGrant, BaseGrantProtocol
 import aiohttp
 import ssl
 from typing import Optional
@@ -60,7 +60,7 @@ class RefreshGrant(BaseGrant):
         BaseGrant (_type_): _description_
     """
 
-    grant: BaseOauth2Grant
+    grant: BaseGrantProtocol
 
     _token: Optional[Token] = None
 

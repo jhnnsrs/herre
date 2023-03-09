@@ -33,10 +33,74 @@ def build_refresh_url(grant: BaseOauth2Grant)-> str:
     )
 
 
+
+success_full_return = """
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Sucessfull Login</title>
+  <meta name="description" content="A success page for login">
+  <meta name="author" content="SitePoint">
+
+  <meta property="og:title" content="Sucessfull Login">
+  <meta property="og:type" content="website">
+
+</head>
+
+<body>
+    <h1>Successfull Login</h1>
+    <p>You can close this window</p>
+  <script type="text/javascript">
+  window.close() ;
+</script>
+</body>
+</html>
+"""
+
+failure_return = """
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Sucessfull Login</title>
+  <meta name="description" content="A success page for login">
+  <meta name="author" content="SitePoint">
+
+  <meta property="og:title" content="Sucessfull Login">
+  <meta property="og:type" content="website">
+
+</head>
+
+<body>
+    <h1>Unsucessfull login</h1>
+    <p>You can close this window</p>
+  <script type="text/javascript">
+  window.close() ;
+</script>
+</body>
+</html>
+"""
+
+
+
+
+
+
+
 def wrapped_qs_future(future):
     async def web_token_response(request):
-        future.set_result(request.path_qs)
-        return web.Response(text="You can close me now !")
+        try:
+            future.set_result(request.path_qs)
+            return web.Response(text=success_full_return, content_type="text/html")
+        except Exception as e:
+            return web.Response(text=failure_return, content_type="text/html")
 
     return web_token_response
 

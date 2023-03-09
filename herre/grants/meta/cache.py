@@ -1,4 +1,4 @@
-from herre.grants.base import BaseGrant
+from herre.grants.base import BaseGrant, BaseGrantProtocol
 from herre.types import Token
 import os
 from typing import Optional
@@ -23,7 +23,7 @@ class CacheGrant(BaseGrant):
     if that file exists, and it is not expired, it will be used instead of delegating
     to the child grant."""
 
-    grant: BaseGrant = pydantic.Field(..., description="The grant to cache")
+    grant: BaseGrantProtocol = pydantic.Field(..., description="The grant to cache")
     cache_file: str = ".fakts_cache.json"
     hash: str = pydantic.Field(
         default_factory=lambda: "",

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Type, runtime_checkable, Protocol
 from fakts import get_current_fakts
 from pydantic import BaseModel, Field, SecretStr
 from herre.grants.base import BaseGrant
@@ -22,10 +22,16 @@ class HerreFakt(BaseModel):
     timeout: int = 500
     no_temp: bool = False
 
+@runtime_checkable
+class BaseGrantFactory(Protocol):
+
+    def __call__(self, **kwds: Any) -> BaseGrant:
+        pass
+
 
 class FaktsGrant(BaseOauth2Grant):
     base_url: Optional[str] = None
-    grant: Optional[BaseGrant] = None
+    grant_class: Optional[BaseGrantFactory]
     grant_registry: GrantRegistry = Field(default_factory=get_default_grant_registry)
     fakts_group: str = "lok"
     allow_reconfiguration_on_invalid_client: bool = True
@@ -35,16 +41,17 @@ class FaktsGrant(BaseOauth2Grant):
     _old_fakt: Dict[str, Any] = {}
 
     def configure(self, fakt: HerreFakt) -> None:
-        self._activegrant = self.grant or self.grant_registry.get_grant_for_type(
+        grant_class = self.grant_class or self.grant_registry.get_grant_for_type(
             fakt.grant_type
-        )(**fakt.dict())
+        )
+
+        self._activegrant = grant_class(**fakt.dict())
 
     async def afetch_token(self, force_refresh=False):
         fakts = get_current_fakts()
 
         if fakts.has_changed(self._old_fakt, self.fakts_group):
             self._old_fakt = await fakts.aget(self.fakts_group)
-            print(self._old_fakt)
             self.configure(HerreFakt(**self._old_fakt))
 
         try:

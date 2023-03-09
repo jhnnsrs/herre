@@ -21,14 +21,14 @@ class LoginWrapper(QWebEngineView):
         self.name = self.page()
         self.redirect_uri = None
         self.show_coro = QtCoro(self.initialize)
-        self.urlChanged.connect(self._interceptUrl)
 
     def initialize(self, future: QtFuture, auth_url: str, redirect_uri: str) -> None:
+        print("INITIALIZE")
         self.future = future
         self.redirect_uri = redirect_uri
         self.future = future
 
-        self.setUrl(QtCore.QUrl(auth_url))
+        self.load(QtCore.QUrl(auth_url))
         self.show()
 
     def _interceptUrl(self, url: QtCore.QUrl):
