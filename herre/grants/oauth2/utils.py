@@ -17,7 +17,7 @@ def build_authorize_url(grant: BaseOauth2Grant) -> str:
     )
 
 
-def build_token_url(grant: BaseOauth2Grant)-> str:
+def build_token_url(grant: BaseOauth2Grant) -> str:
     return (
         f"{grant.base_url}/{grant.token_path}/"
         if grant.append_trailing_slash
@@ -25,13 +25,12 @@ def build_token_url(grant: BaseOauth2Grant)-> str:
     )
 
 
-def build_refresh_url(grant: BaseOauth2Grant)-> str:
+def build_refresh_url(grant: BaseOauth2Grant) -> str:
     return (
         f"{grant.base_url}/{grant.refresh_path}/"
         if grant.append_trailing_slash
         else f"{grant.base_url}/{grant.refresh_path}"
     )
-
 
 
 success_full_return = """
@@ -89,11 +88,6 @@ failure_return = """
 """
 
 
-
-
-
-
-
 def wrapped_qs_future(future):
     async def web_token_response(request):
         try:
@@ -114,7 +108,7 @@ async def wait_for_redirect(
     print_function=False,
     handle_signals=False,
 ) -> str:
-    """ A simple webserver that will listen for a redirect from the OSF and return the path """
+    """A simple webserver that will listen for a redirect from the OSF and return the path"""
 
     token_future = asyncio.get_event_loop().create_future()
 
@@ -133,16 +127,18 @@ async def wait_for_redirect(
         timeout,
     )
 
+    webserver_task = asyncio.create_task(webserver_future)
+
     webbrowser.open(starturl)
     done, pending = await asyncio.wait(
-        [token_future, webserver_future], return_when=asyncio.FIRST_COMPLETED
+        [token_future, webserver_task], return_when=asyncio.FIRST_COMPLETED
     )
 
     for tf in done:
         if tf == token_future:
             redirect_qs = tf.result()
         else:
-            redirect_qs = None
+            raise Oauth2RedirectError(f"Webserver ended unexpectedly {str(tf.exception())}")
 
     for task in pending:
         task.cancel()
@@ -153,6 +149,6 @@ async def wait_for_redirect(
             pass
 
     if not redirect_qs:
-        raise Oauth2RedirectError("No redirect path provided")
+        raise Oauth2RedirectError("Webserver")
 
     return redirect_qs

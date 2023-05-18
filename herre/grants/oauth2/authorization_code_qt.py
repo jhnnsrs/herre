@@ -23,7 +23,6 @@ class LoginWrapper(QWebEngineView):
         self.show_coro = QtCoro(self.initialize)
 
     def initialize(self, future: QtFuture, auth_url: str, redirect_uri: str) -> None:
-        print("INITIALIZE")
         self.future = future
         self.redirect_uri = redirect_uri
         self.future = future

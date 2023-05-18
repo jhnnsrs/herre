@@ -18,12 +18,15 @@ REDIRECT_PORT = 6767
 
 @runtime_checkable
 class RedirectWaiter(Protocol):
-    def __call__(self, starturl,
-    redirect_host="localhost",
-    redirect_port=6767,
-    path="/",
-    timeout=400) -> Awaitable[str]: ...
-
+    def __call__(
+        self,
+        starturl,
+        redirect_host="localhost",
+        redirect_port=6767,
+        path="/",
+        timeout=400,
+    ) -> Awaitable[str]:
+        ...
 
 
 class AuthorizationCodeServerGrant(BaseOauth2Grant):
@@ -34,7 +37,6 @@ class AuthorizationCodeServerGrant(BaseOauth2Grant):
     """ A simple webserver that will listen for a redirect from the OSF and return the path """
 
     async def afetch_token(self, force_refresh=True) -> Token:
-
         web_app_client = WebApplicationClient(
             self.client_id.get_secret_value(),
             scope=self.scope_delimiter.join(self.scopes + ["openid"]),
@@ -48,7 +50,6 @@ class AuthorizationCodeServerGrant(BaseOauth2Grant):
             redirect_uri=f"http://{self.redirect_host}:{self.redirect_port}/",
             connector=aiohttp.TCPConnector(ssl=self.ssl_context),
         ) as session:
-
             auth_url, state = session.authorization_url(build_authorize_url(self))
 
             path = await self.redirect_waiter(
