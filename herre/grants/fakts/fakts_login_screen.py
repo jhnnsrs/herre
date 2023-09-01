@@ -6,7 +6,7 @@ from herre.grants.qt.login_screen import (
     FetchingUserException,
 )
 from typing import Optional
-from fakts import get_current_fakts, Fakts
+from fakts import Fakts
 import logging
 import aiohttp
 from pydantic import Field
@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class FaktsQtLoginScreen(QtLoginScreen):
+    fakts: Fakts
     userinfo_endpoint: Optional[str]
     fakts_group: str = "lok"
     fakts: Optional[Fakts] = None
@@ -25,8 +26,7 @@ class FaktsQtLoginScreen(QtLoginScreen):
     """ An ssl context to use for the connection to the endpoint"""
 
     async def aget_userinfo_endpoint(self) -> str:
-        fakts = get_current_fakts()
-        unserialized = await fakts.aget(self.fakts_group)
+        unserialized = await self.fakts.aget(self.fakts_group)
         self.userinfo_endpoint = unserialized["base_url"] + "/me/"
         return unserialized["base_url"] + "/me/"
 

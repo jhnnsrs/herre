@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Optional, Type, runtime_checkable, Protocol
-from fakts import get_current_fakts
 from pydantic import BaseModel, Field, SecretStr
 from herre.grants.base import BaseGrant
-from .registry import GrantRegistry, get_default_grant_registry
+from herre.grants.registry import GrantRegistry, get_default_grant_registry
 from herre.types import GrantType
 from herre.grants.oauth2.base import BaseOauth2Grant
 from oauthlib.oauth2.rfc6749.errors import InvalidClientError
+from fakts import Fakts
 
 
 class HerreFakt(BaseModel):
@@ -22,18 +22,19 @@ class HerreFakt(BaseModel):
     timeout: int = 500
     no_temp: bool = False
 
+
 @runtime_checkable
 class BaseGrantFactory(Protocol):
-
     def __call__(self, **kwds: Any) -> BaseGrant:
         pass
 
 
 class FaktsGrant(BaseOauth2Grant):
+    fakts: Fakts
     base_url: Optional[str] = None
     grant_class: Optional[BaseGrantFactory]
     grant_registry: GrantRegistry = Field(default_factory=get_default_grant_registry)
-    fakts_group: str = "lok"
+    fakts_group: str
     allow_reconfiguration_on_invalid_client: bool = True
 
     _configured = False
@@ -48,17 +49,19 @@ class FaktsGrant(BaseOauth2Grant):
         self._activegrant = grant_class(**fakt.dict())
 
     async def afetch_token(self, force_refresh=False):
-        fakts = get_current_fakts()
+        self.fakts
 
-        if fakts.has_changed(self._old_fakt, self.fakts_group):
-            self._old_fakt = await fakts.aget(self.fakts_group)
+        if self.fakts.has_changed(self._old_fakt, self.fakts_group):
+            self._old_fakt = await self.fakts.aget(self.fakts_group)
             self.configure(HerreFakt(**self._old_fakt))
 
         try:
             return await self._activegrant.afetch_token(force_refresh=force_refresh)
         except InvalidClientError as e:
             if self.allow_reconfiguration_on_invalid_client:
-                self._old_fakt = await fakts.aget(self.fakts_group, force_refresh=True)
+                self._old_fakt = await self.fakts.aget(
+                    self.fakts_group, force_refresh=True
+                )
                 self.configure(HerreFakt(**self._old_fakt))
                 return await self._activegrant.afetch_token(force_refresh=True)
             else:
