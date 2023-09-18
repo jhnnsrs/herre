@@ -48,7 +48,7 @@ class FaktsGrant(BaseOauth2Grant):
 
         self._activegrant = grant_class(**fakt.dict())
 
-    async def afetch_token(self, force_refresh=False):
+    async def afetch_token(self, request):
         self.fakts
 
         if self.fakts.has_changed(self._old_fakt, self.fakts_group):
@@ -56,14 +56,14 @@ class FaktsGrant(BaseOauth2Grant):
             self.configure(HerreFakt(**self._old_fakt))
 
         try:
-            return await self._activegrant.afetch_token(force_refresh=force_refresh)
+            return await self._activegrant.afetch_token(request)
         except InvalidClientError as e:
             if self.allow_reconfiguration_on_invalid_client:
                 self._old_fakt = await self.fakts.aget(
                     self.fakts_group, force_refresh=True
                 )
                 self.configure(HerreFakt(**self._old_fakt))
-                return await self._activegrant.afetch_token(force_refresh=True)
+                return await self._activegrant.afetch_token(request)
             else:
                 raise e
 

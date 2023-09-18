@@ -3,7 +3,7 @@ from herre.grants.base import BaseGrant, BaseGrantProtocol
 import aiohttp
 import ssl
 from typing import Optional
-from herre.types import Token
+from herre.types import Token, TokenRequest
 from .utils import build_refresh_url
 import logging
 
@@ -64,7 +64,7 @@ class RefreshGrant(BaseGrant):
 
     _token: Optional[Token] = None
 
-    async def afetch_token(self, force_refresh: bool = False) -> Token:
+    async def afetch_token(self, request: TokenRequest) -> Token:
         """Fetches a token from the oauth2 provider.
 
         Args:
@@ -73,7 +73,7 @@ class RefreshGrant(BaseGrant):
         Returns:
             Token: The token
         """
-        if not force_refresh:
+        if request.context.get("allow_refresh", True):
             if self._token and not self._token.is_expired():
                 return self._token
 
@@ -94,5 +94,5 @@ class RefreshGrant(BaseGrant):
                     logger.debug("Could not refresh token. Fetching new one")
                     pass
 
-        self._token = await self.grant.afetch_token(force_refresh=force_refresh)
+        self._token = await self.grant.afetch_token(request)
         return self._token

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "herre"
-version = "0.3.26"
+version = "0.3.27"
 readme = "README.md"
 description = "oauth2/openid client tailored to pyqt and async environments"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
@@ -13,7 +13,7 @@ aiohttp = ">3.7.4"
 certifi = ">2021"
 oauthlib = "^3.1.1"
 pydantic = ">=1.9.0"
-koil = ">=0.3.4"
+koil = ">=0.3.5"
 QtPy = { version = "^2.0.1", optional = true }
 
 [tool.poetry.extras]

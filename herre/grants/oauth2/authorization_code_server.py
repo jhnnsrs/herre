@@ -9,7 +9,7 @@ from herre.grants.oauth2.utils import (
 )
 from .base import BaseOauth2Grant
 from typing import Awaitable
-from herre.types import Token
+from herre.types import Token, TokenRequest
 from typing import Protocol, runtime_checkable
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class AuthorizationCodeServerGrant(BaseOauth2Grant):
     redirect_waiter: RedirectWaiter = wait_for_redirect
     """ A simple webserver that will listen for a redirect from the OSF and return the path """
 
-    async def afetch_token(self, force_refresh=True) -> Token:
+    async def afetch_token(self, request: TokenRequest) -> Token:
         web_app_client = WebApplicationClient(
             self.client_id.get_secret_value(),
             scope=self.scope_delimiter.join(self.scopes + ["openid"]),

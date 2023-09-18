@@ -1,5 +1,5 @@
 from herre.grants.base import BaseGrant, BaseGrantProtocol
-from herre.types import Token
+from herre.types import Token, TokenRequest
 import os
 from typing import Optional
 import pydantic
@@ -31,8 +31,7 @@ class CacheGrant(BaseGrant):
     )
     expires_in: Optional[int]
 
-    async def afetch_token(self, force_refresh: bool = False) -> Token:
-
+    async def afetch_token(self, request: TokenRequest) -> Token:
         cache = None
 
         if os.path.exists(self.cache_file):
@@ -54,8 +53,8 @@ class CacheGrant(BaseGrant):
                 except pydantic.ValidationError as e:
                     logger.error(f"Could not load cache file: {e}. Ignoring it")
 
-        if cache is None or force_refresh:
-            token = await self.grant.afetch_token(force_refresh=force_refresh)
+        if cache is None or not request.context.get("allow_cache", True):
+            token = await self.grant.afetch_token(request)
             cache = CacheFile(
                 token=token,
                 created=datetime.datetime.now(),

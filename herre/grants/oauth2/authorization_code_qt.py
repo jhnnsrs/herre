@@ -3,7 +3,7 @@ import aiohttp
 from pydantic import Field
 from herre.grants.oauth2.base import BaseOauth2Grant
 from herre.grants.oauth2.session import OAuth2Session
-from herre.types import Token
+from herre.types import Token, TokenRequest
 from qtpy import QtWidgets
 from koil.qt import QtCoro, QtFuture
 from qtpy.QtWebEngineWidgets import QWebEngineView
@@ -45,7 +45,7 @@ class AuthorizationCodeQtGrant(BaseOauth2Grant):
     redirect_timeout: int = 40
     login_wrapper: LoginWrapper = Field(default_factory=LoginWrapper)
 
-    async def afetch_token(self, force_refresh: bool = False) -> Token:
+    async def afetch_token(self, request: TokenRequest) -> Token:
         redirect_uri = f"http://{self.redirect_host}:{self.redirect_port}"
 
         web_app_client = WebApplicationClient(
