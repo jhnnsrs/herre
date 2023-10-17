@@ -21,7 +21,7 @@ class RedirectWaiter(Protocol):
     def __call__(
         self,
         starturl,
-        redirect_host="localhost",
+        redirect_host="127.0.0.1",
         redirect_port=6767,
         path="/",
         timeout=400,
@@ -32,7 +32,7 @@ class RedirectWaiter(Protocol):
 class AuthorizationCodeServerGrant(BaseOauth2Grant):
     redirect_port: int = 6767
     redirect_timeout: int = 40
-    redirect_host: str = "localhost"
+    redirect_host: str = "127.0.0.1"
     redirect_waiter: RedirectWaiter = wait_for_redirect
     """ A simple webserver that will listen for a redirect from the OSF and return the path """
 

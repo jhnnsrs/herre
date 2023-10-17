@@ -1,3 +1,4 @@
+from herre.fetcher.errors import UserFetchingError
 from herre.grants.base import BaseGrant
 from typing import Any, Dict, List, Optional, Type, runtime_checkable, Protocol
 from pydantic import BaseModel, Field, SecretStr
@@ -22,22 +23,6 @@ class User(BaseModel):
 class StoredUser(BaseModel):
     user: User
     token: Token
-
-
-class FetchingUserException(GrantException):
-    """A base exception for errors that occur while fetching a user.
-
-    Args:
-        GrantException (_type_): _description_
-    """
-
-    pass
-
-
-class MalformedAnswerException(FetchingUserException):
-    """Raised when the answer from the userinfo endpoint is malformed."""
-
-    pass
 
 
 @runtime_checkable
@@ -111,7 +96,7 @@ class AutoLoginGrant(BaseGrant):
                             StoredUser(user=user, token=stored_user.token)
                         )
                         return stored_user.token
-                    except FetchingUserException:
+                    except UserFetchingError:
                         # The token is not valid anymore
                         token = await self.grant.afetch_token(request)
                         user = await self.fetcher.afetch_user(token)
@@ -130,7 +115,6 @@ class AutoLoginGrant(BaseGrant):
 
             new_store = StoredUser(user=user.dict(), token=token)
             should_we_save = await self.widget.ashould_we_save(new_store)
-            print("should_we_save", should_we_save)
             if should_we_save:
                 await self.store.aput_default_user(new_store)
             else:

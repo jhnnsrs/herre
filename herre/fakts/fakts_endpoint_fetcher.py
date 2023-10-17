@@ -34,11 +34,9 @@ class FaktsUserFetcher(BaseModel):
             async with session.get(
                 await self.fakts.aget(self.fakts_key),
             ) as resp:
-                data = await resp.json()
-
                 if resp.status == 200:
-                    data = await resp.json()
                     try:
+                        data = await resp.json()
                         return self.userModel(**data)
                     except Exception as e:
                         logger.error(f"Malformed answer: {data}", exc_info=True)
