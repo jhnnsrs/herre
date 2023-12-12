@@ -115,7 +115,11 @@ class AuthorizationCodeGrant(BaseOauth2Grant):
 
         token_url = build_token_url(self)
 
-        body = web_app_client.prepare_request_body(code=code, redirect_uri=redirect_uri)
+        body = web_app_client.prepare_request_body(
+            code=code,
+            redirect_uri=redirect_uri,
+            client_secret=self.client_secret.get_secret_value(),
+        )
 
         headers = {
             "Accept": "application/json",

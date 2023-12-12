@@ -30,8 +30,8 @@ class ShouldWeSaveThisAsDefault(QtWidgets.QDialog):
         self.yes_button = QtWidgets.QPushButton("Yes")
         self.no_button = QtWidgets.QPushButton("No")
 
-        self.yes_button.clicked.connect(self._on_yes)
-        self.no_button.clicked.connect(self._on_no)
+        self.yes_button.clicked.connect(self._on_yes) 
+        self.no_button.clicked.connect(self._on_no) 
 
         self.stored = stored
 

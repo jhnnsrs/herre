@@ -12,5 +12,6 @@ Herre is build on top of aiohttp, and uses pydantic for data validation.
 
 
 from .herre import Herre, current_herre
+from .builders import github_desktop
 
-__all__ = ["Herre", "current_herre"]
+__all__ = ["Herre", "current_herre", "github_desktop"]
