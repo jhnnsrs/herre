@@ -1,5 +1,5 @@
-from herre.grants.base import BaseGrant
-from herre.types import Token
+from herre.grants.base import BaseGrant, BaseGrantProtocol
+from herre.models import Token, TokenRequest
 import os
 from typing import Optional
 import pydantic
@@ -23,15 +23,42 @@ class CacheGrant(BaseGrant):
     if that file exists, and it is not expired, it will be used instead of delegating
     to the child grant."""
 
-    grant: BaseGrant = pydantic.Field(..., description="The grant to cache")
+    grant: BaseGrantProtocol = pydantic.Field(..., description="The grant to cache")
+    """The grant to cache"""
     cache_file: str = ".fakts_cache.json"
+    """The cache file to use"""
     hash: str = pydantic.Field(
         default_factory=lambda: "",
         description="Validating against the hash of the config",
     )
+    """The hash of the config to validate against"""
     expires_in: Optional[int]
+    """The expiration time of the cache"""
 
-    async def afetch_token(self, force_refresh: bool = False) -> Token:
+    async def afetch_token(self, request: TokenRequest) -> Token:
+        """Fetches a token
+
+        This function will delegate to the child grant if the cache is expired or
+        does not exist.
+
+        Additionally, it will check the hash of the config, and the expiration data
+        if it does not match, it will delegate to the child grant.
+
+        Token Request Parameters:
+        -------------------------
+        allow_cache: bool
+            Whether to allow the cache to be used
+
+        Parameters
+        ----------
+        request : TokenRequest
+            The token request to use
+
+        Returns
+        -------
+        Token
+            The token
+        """
 
         cache = None
 
@@ -54,8 +81,8 @@ class CacheGrant(BaseGrant):
                 except pydantic.ValidationError as e:
                     logger.error(f"Could not load cache file: {e}. Ignoring it")
 
-        if cache is None or force_refresh:
-            token = await self.grant.afetch_token(force_refresh=force_refresh)
+        if cache is None or not request.context.get("allow_cache", True):
+            token = await self.grant.afetch_token(request)
             cache = CacheFile(
                 token=token,
                 created=datetime.datetime.now(),

@@ -1,9 +1,9 @@
-from .base import BaseOauth2Grant
-from herre.grants.base import BaseGrant
 import aiohttp
 import ssl
 from typing import Optional
-from herre.types import Token
+from herre.grants.oauth2.base import BaseOauth2Grant
+from herre.grants.base import BaseGrant
+from herre.models import Token, TokenRequest
 from .utils import build_refresh_url
 import logging
 
@@ -64,16 +64,31 @@ class RefreshGrant(BaseGrant):
 
     _token: Optional[Token] = None
 
-    async def afetch_token(self, force_refresh: bool = False) -> Token:
-        """Fetches a token from the oauth2 provider.
+    async def afetch_token(self, request: TokenRequest) -> Token:
+        """Fetches a token
 
-        Args:
-            force_refresh (bool, optional): Force a refresh of the token. Defaults to False.
+        This function will get a token from the underlying grant,
+        once granted it will try to refresh the token if it is expired
+        and a refresh token is available. When the token is expired
+        and no refresh token is available, it will try to fetch a new token.
 
-        Returns:
-            Token: The token
+        TokenRequest Context Parameters
+        -------------------------------
+        allow_refresh: bool
+            Whether to allow refreshing the token. Defaults to True
+
+
+        Parameters
+        ----------
+        request : TokenRequest
+            The token request to use
+
+        Returns
+        -------
+        Token
+            The token
         """
-        if not force_refresh:
+        if request.context.get("allow_refresh", True):
             if self._token and not self._token.is_expired():
                 return self._token
 
@@ -94,5 +109,5 @@ class RefreshGrant(BaseGrant):
                     logger.debug("Could not refresh token. Fetching new one")
                     pass
 
-        self._token = await self.grant.afetch_token(force_refresh=force_refresh)
+        self._token = await self.grant.afetch_token(request)
         return self._token

@@ -10,7 +10,9 @@
     {
       "items": [
         "reference/fakts/__init__",
-        "reference/fakts/herre",
+        "reference/fakts/fakts_endpoint_fetcher",
+        "reference/fakts/fakts_qt_store",
+        "reference/fakts/grant",
         "reference/fakts/registry"
       ],
       "label": "fakts",
@@ -18,54 +20,69 @@
     },
     {
       "items": [
+        "reference/fetcher/__init__",
+        "reference/fetcher/errors",
+        "reference/fetcher/models",
+        "reference/fetcher/userinfo_fetcher"
+      ],
+      "label": "fetcher",
+      "type": "category"
+    },
+    {
+      "items": [
         {
           "items": [
-            "reference/grants/backend/__init__",
-            "reference/grants/backend/app"
+            "reference/grants/meta/__init__",
+            "reference/grants/meta/cache"
           ],
-          "label": "grants.backend",
+          "label": "grants.meta",
           "type": "category"
         },
         {
           "items": [
-            "reference/grants/code_server/__init__",
-            "reference/grants/code_server/app"
+            {
+              "items": [
+                "reference/grants/oauth2/redirecters/__init__",
+                "reference/grants/oauth2/redirecters/aiohttp_server",
+                "reference/grants/oauth2/redirecters/mock",
+                "reference/grants/oauth2/redirecters/qt_login_view"
+              ],
+              "label": "grants.oauth2.redirecters",
+              "type": "category"
+            },
+            "reference/grants/oauth2/__init__",
+            "reference/grants/oauth2/authorization_code",
+            "reference/grants/oauth2/base",
+            "reference/grants/oauth2/client_credentials",
+            "reference/grants/oauth2/errors",
+            "reference/grants/oauth2/refresh",
+            "reference/grants/oauth2/utils"
           ],
-          "label": "grants.code_server",
+          "label": "grants.oauth2",
           "type": "category"
         },
         {
           "items": [
-            "reference/grants/test/__init__",
-            "reference/grants/test/app"
+            "reference/grants/qt/auto_login",
+            "reference/grants/qt/errors",
+            "reference/grants/qt/settings_store"
           ],
-          "label": "grants.test",
-          "type": "category"
-        },
-        {
-          "items": [
-            "reference/grants/windowed/__init__",
-            "reference/grants/windowed/app"
-          ],
-          "label": "grants.windowed",
+          "label": "grants.qt",
           "type": "category"
         },
         "reference/grants/__init__",
+        "reference/grants/auto_login",
         "reference/grants/base",
         "reference/grants/errors",
-        "reference/grants/openid",
-        "reference/grants/refreshable",
-        "reference/grants/session",
-        "reference/grants/user",
-        "reference/grants/utils"
+        "reference/grants/static"
       ],
       "label": "grants",
       "type": "category"
     },
+    "reference/builders",
     "reference/errors",
     "reference/herre",
-    "reference/types",
-    "reference/utils"
+    "reference/models"
   ],
   "label": "Reference",
   "type": "category"

@@ -11,7 +11,7 @@ class NoHerreFound(HerreError):
 
 
 class LoginException(HerreError):
-    """Raised when the login fails."""
+    """Raised when the login dfails."""
 
     pass
 

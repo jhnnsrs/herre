@@ -1,19 +1,24 @@
 import asyncio
 from typing import Optional, TypeVar
-from herre.errors import HerreError
+from herre.errors import HerreError, NoHerreFound
 from herre.grants.base import BaseGrant
 import os
 import logging
-from herre.types import Token
+from herre.models import Token, TokenRequest
 import contextvars
 from koil.composition import KoiledModel
 from koil.helpers import unkoil
+from herre.fetcher.models import UserFetcher
+from pydantic import BaseModel
 
-current_herre: contextvars.ContextVar["Herre"] = contextvars.ContextVar("current_herre")
+current_herre: contextvars.ContextVar[Optional["Herre"]] = contextvars.ContextVar(
+    "current_herre", default=None
+)
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
+
 
 class Herre(KoiledModel):
     """Herre is a client for Token authentication.
@@ -65,6 +70,7 @@ class Herre(KoiledModel):
     """
 
     grant: BaseGrant
+    fetcher: Optional[UserFetcher] = None
     max_retries: int = 1
     allow_insecure: bool = False
     scope_delimiter: str = " "
@@ -88,7 +94,7 @@ class Herre(KoiledModel):
         assert self._token is not None, "No token fetched"
         return self._token
 
-    async def aget_token(self, force_refresh: bool = False) -> str:
+    async def aget_token(self, **kwargs) -> str:
         """Get an access token
 
         Will return an access token if it is already available or
@@ -106,98 +112,81 @@ class Herre(KoiledModel):
         ), "We were not initialized. Please enter the context first"
 
         async with self._lock:
-            if not self._token or not self._token.access_token or force_refresh:
-                if not self.auto_login:
-                    raise HerreError(
-                        "Auto-login is set to false and we need to login again"
-                    )
-                await self.alogin(force_refresh=force_refresh)
+            if not self._token or not self._token.access_token:
+                await self.arequest_from_grant(TokenRequest(context=kwargs))
 
         assert self._token is not None, "We should have a token by now"
         return self._token.access_token
 
-    async def arefresh_token(self) -> str:
+    async def arefresh_token(self, **kwargs) -> str:
         """Refresh the token
 
-        Will try to refresh the token. If the token is not refreshable, it will try to login again.
-        """
-        return await self.aget_token(force_refresh=True)
-
-    async def alogin(self, force_refresh: bool = False) -> Token:
-        """Async Login 
-
-        Login the client. This will try to login the client and set the token. If the token is
-        not refreshable, it will try to login again.
-
-        Args:
-            force_refresh (bool, optional): Should we tell grants to refresh . Defaults to False.
-
-        Raises:
-            AssertionError: If we are not initialized
+        Will cause the linked grant to refresh the token. Depending
+        on the link logic, this might cause another login.
 
         """
         assert (
             self._lock is not None
         ), "We were not initialized. Please enter the context first"
 
-        potential_token = await self.grant.afetch_token(force_refresh=force_refresh)
+        async with self._lock:
+            await self.arequest_from_grant(
+                TokenRequest(is_refresh=True, context=kwargs)
+            )
+            assert self._token is not None, "We should have a token by now"
+            return self._token.access_token
+
+    async def arequest_from_grant(self, request: TokenRequest) -> Token:
+        """Request a token from the grant
+
+        You should not need to call this method directly. It is used internally
+        to request a token from the grant, and will not directly acquire a lock
+        (so multiple requests can happen at the same time, which is often not what
+        you want).
+
+        Parameters
+        ----------
+        request : TokenRequest
+            The token request (contains context and whether it is a refresh request)
+
+        Returns
+        -------
+        Token
+            The token (with access_token, refresh_token, etc.)
+        """
+        potential_token = await self.grant.afetch_token(request)
         self._token = potential_token
         return self._token
 
-    async def alogout(self) -> None:
-        """Logout 
-
-        Logout will set the current state to none and delete the token file.
-        """
-        assert (
-            self._lock is not None
-        ), "We were not initialized. Please enter the context first"
-
-        self._token = None
-
-    def login(self, force_refresh: bool = False, retry: int = 0) -> Token:
-        """Login
-
-        Login the client. This will try to login the client and set the token. If the token is
-        not refreshable, it will try to login again.
-
-        Args:
-            force_refresh (bool, optional): Should we tell grants to refresh . Defaults to False.
-
-        Raises:
-            AssertionError: If we are not initialized
-
-        """
-        return unkoil(
-            self.alogin,
-            force_refresh=force_refresh,
-            retry=retry,
-        )
-
-    def get_token(self, force_refresh: bool = False) -> str:
+    def get_token(self, **kwargs) -> str:
         """Get an access token
 
         Will return an access token if it is already available or
         try to login depending on auto_login. The checking and potential retrieving will happen
         in a lock ensuring that not multiple requests are happening at the same time.
         """
-        return unkoil(self.aget_token, force_refresh=force_refresh)
+        return unkoil(self.aget_token, **kwargs)
 
-    def logout(self) -> None:
-        """Logout 
-        
-        Logout will set the current state to none and delete the token file.
+    async def aget_user(self, **kwargs) -> BaseModel:  # TODO: Should be generic
+        """Get the current user
+
+        Will return the current user if a fetcher is available
         """
-        return unkoil(self.alogout)
+        assert (
+            self._lock is not None
+        ), "We were not initialized. Please enter the context first"
+        assert self.fetcher is not None, "We have no fetcher available"
+        if not self._token:
+            raise HerreError("No token available")
+        async with self._lock:
+            if not self._token or not self._token.access_token:
+                await self.arequest_from_grant(TokenRequest(context=kwargs))
 
-    @property
-    def logged_in(self) -> bool:
-        """Is the client logged in
-        """
-        return self._token is not None
+        assert self._token is not None, "We should have a token by now"
+        return await self.fetcher.afetch_user(self._token)
 
-    async def __aenter__(self: T) -> T:
-        """ Enters the context and logs in if needed"""
+    async def __aenter__(self) -> "Herre":
+        """Enters the context and logs in if needed"""
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "0" if self.allow_insecure else "1"
         self._lock = asyncio.Lock()
         current_herre.set(self)
@@ -214,10 +203,21 @@ class Herre(KoiledModel):
         current_herre.set(None)
 
     def _repr_html_inline_(self) -> str:
-        """ Jupyter inline representation """
+        """Jupyter inline representation"""
         return f"<table><tr><td>auto_login</td><td>{self.auto_login}</td></tr></table>"
 
     class Config:
-        
+        """Pydantic config"""
+
         underscore_attrs_are_private = True
         extra = "forbid"
+
+
+def get_current_herre() -> Herre:
+    """Get the current herre instance"""
+    herre = current_herre.get()
+
+    if herre is None:
+        raise NoHerreFound("No herre instance available")
+
+    return herre
