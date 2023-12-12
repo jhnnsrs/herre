@@ -32,7 +32,7 @@ class GrantRegistry(BaseModel):
 
     registered_grants: Dict[GrantType, GrantBuilder] = Field(default_factory=dict)
 
-    def register_grant(self, type: GrantType, grant: GrantBuilder) -> None:
+    def register_grant(self, grant_type: GrantType, grant: GrantBuilder) -> None:
         """Registers a grant.
 
         Parameters:
@@ -45,9 +45,9 @@ class GrantRegistry(BaseModel):
         """
         if not self.registered_grants:
             self.registered_grants = {}
-        self.registered_grants[type] = grant
+        self.registered_grants[grant_type] = grant
 
-    def get_grant_for_type(self, type: GrantType) -> GrantBuilder:
+    def get_grant_for_type(self, grant_type: GrantType) -> GrantBuilder:
         """Gets the grant for a type.
 
         Parameters:
@@ -61,57 +61,10 @@ class GrantRegistry(BaseModel):
             The grant for the type
 
         """
-        return self.registered_grants[type]
+        return self.registered_grants[grant_type]
 
     class Config:
         """Pydantic config"""
 
         json_encoders = {type: lambda x: x.__name__}
         underscore_attrs_are_private = True
-
-
-def register_grant(type: GrantType) -> Callable[[Type[BaseGrant]], Type[BaseGrant]]:
-    """Decorator to register a grant
-
-    This decorator registers a grant in the default grant registry.
-    It can be used to register grants in the default grant registry.
-    It is used by the fakts grant to build the correct grant from the fakts.
-
-    """
-
-    def real_decorator(grant: Type[BaseGrant]) -> Type[BaseGrant]:
-        """The real decorator"""
-
-        get_default_grant_registry().register_grant(type, grant)
-        return grant
-
-    return real_decorator
-
-
-GRANT_REGISTRY: Optional[GrantRegistry] = None
-
-
-def get_default_grant_registry() -> GrantRegistry:
-    """Gets the default grant registry.
-
-    If the default grant registry is not initialized, it will be initialized
-    with the default grants.
-
-    """
-
-    global GRANT_REGISTRY
-    if not GRANT_REGISTRY:
-        GRANT_REGISTRY = GrantRegistry()
-        from herre.grants.oauth2.client_credentials import ClientCredentialsGrant
-        from herre.grants.oauth2.authorization_code_server import (
-            AuthorizationCodeServerGrant,
-        )
-
-        GRANT_REGISTRY.register_grant(
-            GrantType.AUTHORIZATION_CODE, AuthorizationCodeServerGrant
-        )
-        GRANT_REGISTRY.register_grant(
-            GrantType.CLIENT_CREDENTIALS, ClientCredentialsGrant
-        )
-
-    return GRANT_REGISTRY

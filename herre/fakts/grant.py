@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, SecretStr
 from herre.grants.base import BaseGrant
-from herre.fakts.registry import GrantType, GrantRegistry, get_default_grant_registry
+from herre.fakts.registry import GrantType, GrantRegistry
 from herre.grants.oauth2.base import BaseOauth2Grant
 from oauthlib.oauth2.rfc6749.errors import InvalidClientError
 from fakts import Fakts
@@ -44,10 +44,11 @@ class FaktsGrant(BaseOauth2Grant):
 
     fakts: Fakts
     """Fakts instance to use"""
+    grant_registry: GrantRegistry
+    """The grant registry to use"""
+
     base_url: Optional[str] = None  # type: ignore
     """The base url to use for the grant (overwrites the one from the fakt)"""
-    grant_registry: GrantRegistry = Field(default_factory=get_default_grant_registry)
-    """The grant registry to use"""
     fakts_group: str
     """The fakts group to use for the grant"""
     allow_reconfiguration_on_invalid_client: bool = True

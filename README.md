@@ -11,18 +11,21 @@
 
 ## Idea
 
-herre is an (asynchronous) client for token authentication through oauth2 (and potentially other protocols).
+Herre is a Python Library for easy integration with Token Based Authentication
+in Python Applications, (for example using OAuth2). It is designed to be
+extensible, and easy to use, and is built for the async world, while maintaining
+sync compatibility.
 
-## Prerequisites
+Herre is build on top of aiohttp, and uses pydantic for data validation.
 
-herre needs a oauth2/opendid server to connect to
 
 ## Supports
 
-- Authorization Code Flow (PKCE)
-  - Within a Qt app through a QtWebengine View
-  - With a Redirect Server
-- Client-Credentials Flow
+Oauth2 Protocols:
+  - Authorization Code Flow
+    - Within a Qt app through a QtWebengine View
+    - With a Redirect Server
+  - Client-Credentials Flow
 
 ## Usage
 
@@ -78,7 +81,7 @@ client = Herre(
 ))
 
 async with client:
-  await client.login()
+  await client.aget_token()
 ```
 
 Enabling refresh tokens:
@@ -93,7 +96,7 @@ client = Herre(
 ))
 
 async with client:
-  await client.login()
+  await client.aget_token()
 ```
 
 Please check out the documentation for the meta grants to see how to enable custom logic.
