@@ -1,5 +1,5 @@
 from herre.grants.base import BaseGrant, BaseGrantProtocol
-from herre.types import Token, TokenRequest
+from herre.models import Token, TokenRequest
 import os
 from typing import Optional
 import pydantic
@@ -24,14 +24,44 @@ class CacheGrant(BaseGrant):
     to the child grant."""
 
     grant: BaseGrantProtocol = pydantic.Field(..., description="The grant to cache")
+    """The grant to cache"""
     cache_file: str = ".fakts_cache.json"
+    """The cache file to use"""
     hash: str = pydantic.Field(
         default_factory=lambda: "",
         description="Validating against the hash of the config",
     )
+    """The hash of the config to validate against"""
     expires_in: Optional[int]
+    """The expiration time of the cache"""
 
     async def afetch_token(self, request: TokenRequest) -> Token:
+        """Fetches a token
+
+        This function will delegate to the child grant if the cache is expired or
+        does not exist.
+
+        Additionally, it will check the hash of the config, and the expiration data
+        if it does not match, it will delegate to the child grant.
+
+        Token Request Parameters:
+        -------------------------
+        allow_cache: bool
+            Whether to allow the cache to be used
+
+        Parameters
+        ----------
+        request : TokenRequest
+            The token request to use
+
+        Returns
+        -------
+        Token
+            The token
+        """
+
+
+
         cache = None
 
         if os.path.exists(self.cache_file):

@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 import ssl
 import certifi
 import aiohttp
-from .types import Token
+from .models import Token
 import logging
 from .errors import UserFetchingError
 from typing import Type
@@ -11,6 +11,19 @@ logger = logging.getLogger(__name__)
 
 
 class UserinfoUserFetcher(BaseModel):
+    """A user fetcher that fetches the user from an userinfo endpoint.
+    
+    This fetcher uses the userinfo endpoint to fetch the user. It uses the access token to
+    authenticate itself to the userinfo endpoint.
+
+    You can specify the model to use for the user. This model will be used to parse the answer
+    from the userinfo endpoint. The model should be a pydantic model.
+
+
+    """
+
+
+
     userModel: Type[BaseModel] = Field(
         description="The model to use for the user",
     )
@@ -27,6 +40,19 @@ class UserinfoUserFetcher(BaseModel):
     """ An ssl context to use for the connection to the endpoint"""
 
     async def afetch_user(self, token: Token) -> BaseModel:
+        """Fetches the user from the userinfo endpoint.
+
+        Parameters:
+        ___________
+        token: Token
+            The token to use to authenticate to the userinfo endpoint.
+
+        Returns:
+        ________
+        BaseModel
+            The user as a pydantic model (will be userModel)
+
+        """
         async with aiohttp.ClientSession(
             connector=aiohttp.TCPConnector(ssl=self.ssl_context),
             headers={"Authorization": f"Bearer {token.access_token}"},

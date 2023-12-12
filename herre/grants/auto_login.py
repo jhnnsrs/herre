@@ -1,44 +1,73 @@
 from herre.fetcher.errors import UserFetchingError
 from herre.grants.base import BaseGrant
-from typing import Any, Dict, List, Optional, Type, runtime_checkable, Protocol
-from pydantic import BaseModel, Field, SecretStr
-from herre.types import GrantType, Token, TokenRequest
-from herre.grants.errors import GrantException
+from typing import Optional, runtime_checkable, Protocol
+from pydantic import BaseModel
+from herre.models import Token, TokenRequest
 from herre.grants.base import BaseGrantProtocol
-import ssl
-import certifi
-import aiohttp
 import logging
 import asyncio
-from herre.fetcher.types import UserFetcher
+from herre.fetcher.models import UserFetcher
 
 logger = logging.getLogger(__name__)
 
 
 class User(BaseModel):
+    """A user model"""
     id: str
     username: str
 
 
 class StoredUser(BaseModel):
+    """ A wrapping cl"""
     user: User
     token: Token
 
 
 @runtime_checkable
 class UserStore(Protocol):
-    async def ashould_we_auto_login(self) -> bool:
-        ...
+    """A protocol for a user store
+    
+    This protocol is implemented by the user store.
+    It can be used to type hint a user store. This
+    is used by the AutoLoginGrant to store the user.
+    
+    """
 
     async def aget_default_user(self) -> Optional[StoredUser]:
+        """Gets the default user
+
+        Returns
+        -------
+        Optional[StoredUser]
+            A stored user, with the token and the user
+        """
         ...
 
-    async def aput_default_user(self, user: StoredUser) -> None:
+    async def aput_default_user(self, user: Optional[StoredUser]) -> None:
+        """Stores the default user
+
+
+        Parameters
+        ----------
+        user : Optional[StoredUser]
+            A stored user, with the token and the user, if None, the user should
+            be deleted
+
+        """
         ...
 
 
 @runtime_checkable
 class AutoLoginWidget(Protocol):
+    """ A protocol for a login widget
+    
+    This protocol is implemented by the login widget.
+    It can be used to type hint a login widget. This
+    is used by the AutoLoginGrant to show the login widget
+    and ask the user if they want to save the user.
+    """
+
+
     async def ashould_we_save(self, store: StoredUser) -> bool:
         """Should ask the user if we should save the user"""
         ...
@@ -83,17 +112,18 @@ class AutoLoginGrant(BaseGrant):
         """
 
         try:
-            print("afetch_token", request)
+            if request.context.get("delete_active", True):
+                await self.store.aput_default_user(None)
+
             if request.context.get("allow_auto_login", True):
-                stored_user: StoredUser = await self.store.aget_default_user()
-                print("user", stored_user)
+                stored_user = await self.store.aget_default_user()
                 if stored_user:
                     # Lets check if the token is still valid
 
                     try:
                         user = await self.fetcher.afetch_user(stored_user.token)
                         await self.store.aput_default_user(
-                            StoredUser(user=user, token=stored_user.token)
+                            StoredUser(user=user.dict(), token=stored_user.token) #type: ignore # we dict here to ensure the serialization works
                         )
                         return stored_user.token
                     except UserFetchingError:
@@ -102,8 +132,8 @@ class AutoLoginGrant(BaseGrant):
                         user = await self.fetcher.afetch_user(token)
                         await self.store.aput_default_user(
                             StoredUser(
-                                user=user.dict(), token=token
-                            )  # we dict here to ensure the serialization works
+                                user=user.dict(), token=token #type: ignore# we dict here to ensure the serialization works
+                            )   
                         )
                         return token
 
@@ -113,7 +143,7 @@ class AutoLoginGrant(BaseGrant):
             token = await self.grant.afetch_token(request)
             user = await self.fetcher.afetch_user(token)
 
-            new_store = StoredUser(user=user.dict(), token=token)
+            new_store = StoredUser(user=user.dict(), token=token)  #type: ignore # we dict here to ensure the serialization works
             should_we_save = await self.widget.ashould_we_save(new_store)
             if should_we_save:
                 await self.store.aput_default_user(new_store)
@@ -130,5 +160,6 @@ class AutoLoginGrant(BaseGrant):
             raise e
 
     class Config:
+        """Pydantic config"""
         underscore_attrs_are_private = True
         arbitrary_types_allowed = True

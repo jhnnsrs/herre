@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 import ssl
 import certifi
 import aiohttp
-from herre.fetcher.types import Token
+from herre.fetcher.models import Token
 import logging
 from herre.fetcher.errors import UserFetchingError
 from fakts import Fakts
@@ -27,12 +27,25 @@ class FaktsUserFetcher(BaseModel):
     """ An ssl context to use for the connection to the endpoint"""
 
     async def afetch_user(self, token: Token) -> BaseModel:
+        """Fetches the user from the endpoint
+
+        Parameters
+        ----------
+        token : Token
+            The token to use for the request
+
+        Returns
+        -------
+        BaseModel
+            The userModel filled with the data from the endpoint
+        """
         async with aiohttp.ClientSession(
             connector=aiohttp.TCPConnector(ssl=self.ssl_context),
             headers={"Authorization": f"Bearer {token.access_token}"},
         ) as session:
+            user_info_url = await self.fakts.aget(self.fakts_key)
             async with session.get(
-                await self.fakts.aget(self.fakts_key),
+                user_info_url,
             ) as resp:
                 if resp.status == 200:
                     try:
@@ -43,7 +56,16 @@ class FaktsUserFetcher(BaseModel):
                         raise UserFetchingError("Malformed Answer") from e
 
                 else:
-                    raise UserFetchingError("Error! Coud not retrieve on the endpoint")
+                    try:
+                        resp.raise_for_status()
+                    except Exception as e:
+                        logger.error(f"Could not fetch user: {e}", exc_info=True)
+                        raise UserFetchingError(
+                            f"Could not fetch user from {user_info_url}"
+                        ) from e
+                    
+        raise UserFetchingError("Could not fetch user")
 
     class Config:
+        """pydantic config"""
         arbitrary_types_allowed = True

@@ -1,35 +1,23 @@
-import ssl
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import QWidget
-import certifi
+from qtpy import QtWidgets
 
-from herre.grants.base import BaseGrant, BaseGrantProtocol
-from herre.types import Token
-from typing import List, Optional, Dict
-import logging
-from qtpy import QtWidgets, QtCore
-from pydantic import BaseModel, Field
+from koil.qt import qt_to_async
 
-from koil.qt import QtCoro, QtFuture, QtRunner, qt_to_async, async_to_qt
-from .errors import UserCancelledError
-import asyncio
-import aiohttp
-from herre.grants.errors import GrantException
-import json
-from typing import runtime_checkable, Protocol
-from herre.grants.stored_login import (
-    UserStore,
+from herre.grants.auto_login import (
     StoredUser,
 )
 
 
 class ShouldWeSaveThisAsDefault(QtWidgets.QDialog):
-    def __init__(self, stored: StoredUser = None, *args, **kwargs) -> None:
+    """A dialog that asks the user if they want to save the user as the default user.
+    """
+
+    def __init__(self, stored: StoredUser, *args, **kwargs) -> None:
+        """Creates a new ShouldWeSaveThisAsDefault dialog"""
         super().__init__(*args, **kwargs)
         self.setWindowTitle(f"Hi {stored.user.username}")
 
         self.qlabel = QtWidgets.QLabel(
-            f"Do you want to save yourself as the default user?"
+            "Do you want to save yourself as the default user?"
         )
 
         vlayout = QtWidgets.QVBoxLayout()
@@ -43,28 +31,36 @@ class ShouldWeSaveThisAsDefault(QtWidgets.QDialog):
         self.yes_button = QtWidgets.QPushButton("Yes")
         self.no_button = QtWidgets.QPushButton("No")
 
-        self.yes_button.clicked.connect(self.on_yes)
-        self.no_button.clicked.connect(self.on_no)
+        self.yes_button.clicked.connect(self._on_yes)
+        self.no_button.clicked.connect(self._on_no)
 
         self.stored = stored
 
         hlayout.addWidget(self.yes_button)
         hlayout.addWidget(self.no_button)
 
-    def on_yes(self):
+    def _on_yes(self) -> None:
         self.accept()
 
-    def on_no(self):
+    def _on_no(self)  -> None:
         self.reject()
 
 
 class AutoLoginWidget(QtWidgets.QWidget):
+    """A Qt widget for auto login.
+
+    This widget can be used by the AutoLoginGrant to show the login widget
+    and ask the user if they want to save the user.
+
+    """
     def __init__(self, *args, **kwargs) -> None:
+        """Creates a new AutoLoginWidget
+        """
         super().__init__(*args, **kwargs)
 
-        self.ashould_we = qt_to_async(self.should_we, autoresolve=True)
+        self.ashould_we = qt_to_async(self._should_we, autoresolve=True)
 
-    def should_we(self, stored: StoredUser) -> bool:
+    def _should_we(self, stored: StoredUser) -> bool:
         dialog = ShouldWeSaveThisAsDefault(stored, parent=self)
         dialog.exec_()
         return dialog.result() == QtWidgets.QDialog.Accepted
