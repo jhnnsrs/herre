@@ -9,8 +9,6 @@ from pydantic import BaseModel, Field
 import time
 
 
-
-
 class TokenRequest(BaseModel):
     """A token request
 
@@ -22,8 +20,6 @@ class TokenRequest(BaseModel):
 
     """
 
-
-
     is_refresh: bool = False
     """Whether this is a refresh request"""
     context: Dict[str, Any]
@@ -32,7 +28,7 @@ class TokenRequest(BaseModel):
 
 class Token(BaseModel):
     """A Token
-    
+
     A token object contains all the information about a token.
     It mimics the oauthlib.oauth2.rfc6749.tokens.OAuthToken class.
     However, you can use it with any grant, not just oauth2 grants.

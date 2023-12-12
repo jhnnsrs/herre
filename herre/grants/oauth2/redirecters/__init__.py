@@ -14,8 +14,6 @@ redirecter, by implementing the RedirecterProtocol.
 """
 
 
-
-
 from .mock import MockRedirecter
 from .aiohttp_server import AioHttpServerRedirecter
 

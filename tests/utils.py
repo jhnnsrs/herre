@@ -19,7 +19,6 @@ async def fake_token_generator(*args, **kwargs):
     }
 
 
-
 def construct_final_redirect_uri(auth_url, code):
     """
     Constructs the final redirect URI with the authorization code, using the redirect URI and state
@@ -37,21 +36,22 @@ def construct_final_redirect_uri(auth_url, code):
     query_params = urllib.parse.parse_qs(parsed_url.query)
 
     # Extract the redirect URI and state parameter
-    redirect_uri_param = query_params.get('redirect_uri', [None])[0]
-    state = query_params.get('state', [None])[0]
+    redirect_uri_param = query_params.get("redirect_uri", [None])[0]
+    state = query_params.get("state", [None])[0]
 
     if not redirect_uri_param:
         raise ValueError("Redirect URI not found in the authorization URL.")
 
     # Reconstruct the redirect URI with the code and state
     redirect_uri_components = list(urllib.parse.urlparse(redirect_uri_param))
-    redirect_query_params = {'code': code}
+    redirect_query_params = {"code": code}
     if state:
-        redirect_query_params['state'] = state
+        redirect_query_params["state"] = state
 
-    redirect_uri_components[4] = urllib.parse.urlencode(redirect_query_params)  # Set the query component
+    redirect_uri_components[4] = urllib.parse.urlencode(
+        redirect_query_params
+    )  # Set the query component
     return urllib.parse.urlunparse(redirect_uri_components)
-
 
 
 def wait_for_qttask(qtbot: QtBot, task: QtRunner, cause: Callable[[QtBot], None]):
@@ -65,17 +65,13 @@ def wait_for_qttask(qtbot: QtBot, task: QtRunner, cause: Callable[[QtBot], None]
     task.returned.connect(callback)
     task.errored.connect(callback)
 
-
-    
-    
     with qtbot.waitSignal(task.returned) as blocker:
         blocker.connect(task.errored)
         cause(qtbot)
 
-
     if len(out) == 0:
         raise RuntimeError("Task did not return a value.")
-    
+
     if isinstance(out[0], Exception):
         raise out[0]
     elif out[0] == "MAGIC_NOTHINGNESS_WORD":
@@ -84,11 +80,11 @@ def wait_for_qttask(qtbot: QtBot, task: QtRunner, cause: Callable[[QtBot], None]
         if len(out) == 1:
             return out[0]
         return out
-            
 
 
 async def redirect_result(starturl, *args, **kwargs):
     return construct_final_redirect_uri(starturl, "path")
+
 
 async def loggin_wrapper_result(self, starturl, *args, **kwargs):
     return construct_final_redirect_uri(starturl, "path")

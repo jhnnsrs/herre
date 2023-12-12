@@ -17,7 +17,6 @@ class BaseGrantProtocol(Protocol):
 
     """
 
-
     async def afetch_token(self, request: TokenRequest) -> Token:
         """Fetches a token
 
@@ -47,7 +46,6 @@ class BaseGrant(BaseModel):
 
     """
 
-
     @abstractmethod
     async def afetch_token(self, request: TokenRequest) -> Token:
         """Fetches a token
@@ -69,6 +67,7 @@ class BaseGrant(BaseModel):
 
     class Config:
         """Config for the base grant"""
+
         underscore_attrs_are_private = True
         arbitrary_types_allowed = True
         extras = "forbid"

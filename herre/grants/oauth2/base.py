@@ -7,19 +7,14 @@ from ssl import SSLContext
 
 
 class BaseOauth2Grant(BaseGrant):
-    """A base class for oauth2 grants.
-    
-    
-    
-    
-    
-    """
+    """A base class for oauth2 grants."""
+
     base_url: str
     """The base url to use for the grant"""
 
     client_id: SecretStr = SecretStr("")
     """The client id to use for the grant"""
-    client_secret: SecretStr = SecretStr("")#
+    client_secret: SecretStr = SecretStr("")  #
     """The client secret to use for the grant"""
     scopes: List[str] = Field(default_factory=lambda: list(["openid"]))
     """The scopes to use for the grant"""

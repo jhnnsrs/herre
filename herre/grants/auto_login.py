@@ -13,12 +13,14 @@ logger = logging.getLogger(__name__)
 
 class User(BaseModel):
     """A user model"""
+
     id: str
     username: str
 
 
 class StoredUser(BaseModel):
-    """ A wrapping cl"""
+    """A wrapping cl"""
+
     user: User
     token: Token
 
@@ -26,11 +28,11 @@ class StoredUser(BaseModel):
 @runtime_checkable
 class UserStore(Protocol):
     """A protocol for a user store
-    
+
     This protocol is implemented by the user store.
     It can be used to type hint a user store. This
     is used by the AutoLoginGrant to store the user.
-    
+
     """
 
     async def aget_default_user(self) -> Optional[StoredUser]:
@@ -59,14 +61,13 @@ class UserStore(Protocol):
 
 @runtime_checkable
 class AutoLoginWidget(Protocol):
-    """ A protocol for a login widget
-    
+    """A protocol for a login widget
+
     This protocol is implemented by the login widget.
     It can be used to type hint a login widget. This
     is used by the AutoLoginGrant to show the login widget
     and ask the user if they want to save the user.
     """
-
 
     async def ashould_we_save(self, store: StoredUser) -> bool:
         """Should ask the user if we should save the user"""
@@ -123,7 +124,7 @@ class AutoLoginGrant(BaseGrant):
                     try:
                         user = await self.fetcher.afetch_user(stored_user.token)
                         await self.store.aput_default_user(
-                            StoredUser(user=user.dict(), token=stored_user.token) #type: ignore # we dict here to ensure the serialization works
+                            StoredUser(user=user.dict(), token=stored_user.token)  # type: ignore # we dict here to ensure the serialization works
                         )
                         return stored_user.token
                     except UserFetchingError:
@@ -132,8 +133,8 @@ class AutoLoginGrant(BaseGrant):
                         user = await self.fetcher.afetch_user(token)
                         await self.store.aput_default_user(
                             StoredUser(
-                                user=user.dict(), token=token #type: ignore# we dict here to ensure the serialization works
-                            )   
+                                user=user.dict(), token=token  # type: ignore# we dict here to ensure the serialization works
+                            )
                         )
                         return token
 
@@ -143,7 +144,7 @@ class AutoLoginGrant(BaseGrant):
             token = await self.grant.afetch_token(request)
             user = await self.fetcher.afetch_user(token)
 
-            new_store = StoredUser(user=user.dict(), token=token)  #type: ignore # we dict here to ensure the serialization works
+            new_store = StoredUser(user=user.dict(), token=token)  # type: ignore # we dict here to ensure the serialization works
             should_we_save = await self.widget.ashould_we_save(new_store)
             if should_we_save:
                 await self.store.aput_default_user(new_store)
@@ -161,5 +162,6 @@ class AutoLoginGrant(BaseGrant):
 
     class Config:
         """Pydantic config"""
+
         underscore_attrs_are_private = True
         arbitrary_types_allowed = True

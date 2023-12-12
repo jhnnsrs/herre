@@ -1,14 +1,11 @@
-
 from herre import Herre
 from herre.grants.oauth2.authorization_code import AuthorizationCodeGrant
 from herre.grants.oauth2.redirecters import MockRedirecter
 import pytest
 
 
-
 @pytest.mark.asyncio
 async def test_code_server_mock_sync(valid_token_response):
-
     state = "soinsoisnosine"
 
     x = Herre(

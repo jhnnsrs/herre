@@ -5,17 +5,19 @@ from qtpy import QtCore
 
 
 class WebViewRedirecter(QWebEngineView):
-    """ A qt webengine view that can be used to login to a oauth2 provider
-    
+    """A qt webengine view that can be used to login to a oauth2 provider
+
     This class is used to login to a oauth2 provider, when using the authorization code grant,
     but without a webserver. This class will open a webview, and wait for the user to login.
     When the user is logged in, the user will be redirected to the redirect_uri.
     This redirect_uri will be intercepted, and the code will be returned to the caller.
 
-    
+
     """
 
-    def __init__(self, *args, redirect_uri: str = "http://localhost:4893/", **kwargs) -> None:
+    def __init__(
+        self, *args, redirect_uri: str = "http://localhost:4893/", **kwargs
+    ) -> None:
         """Creates a new WebViewRedirecter
 
         This function will create a new LoginWrapper, and initialize the webview.
@@ -81,23 +83,21 @@ class WebViewRedirecter(QWebEngineView):
             The url to login to
         redirect_uri : str
             The redirect_uri to intercept
-        
+
         Returns
         -------
         str
             The redirect_uri with the code
         """
 
-
         return await self.show_coro(auth_url)
-    
+
     async def aget_redirect_uri(self, token_request: TokenRequest) -> str:
-        """ Retrieves the redirect uri
-        
+        """Retrieves the redirect uri
+
         This function will retrieve the redirect uri from the RedirectWaiter.
         This function has to be implemented by the user.
-        
+
         """
 
         return self.redirect_uri
-    

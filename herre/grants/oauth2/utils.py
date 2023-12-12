@@ -63,5 +63,3 @@ def build_refresh_url(grant: BaseOauth2Grant) -> str:
         if grant.append_trailing_slash
         else f"{grant.base_url}/{grant.refresh_path}"
     )
-
-

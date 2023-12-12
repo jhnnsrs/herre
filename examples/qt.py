@@ -6,10 +6,8 @@ from herre import Herre
 
 
 class QtHerreWidget(QtWidgets.QWidget):
-    """A widget that greets the user.
+    """A widget that greets the user."""
 
-    
-    """
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.koil = QtKoil()
@@ -39,7 +37,7 @@ class QtHerreWidget(QtWidgets.QWidget):
         self.button_greet.clicked.connect(self.greet)
 
     def greet(self) -> None:
-        """ Starts the login task."""
+        """Starts the login task."""
         self.login_task.run()
 
 

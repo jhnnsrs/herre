@@ -19,20 +19,13 @@ logger = logging.getLogger(__name__)
 class Redirecter(Protocol):
     """A protocol for a from oauthlib.common import generate_tokenedirect waiter"""
 
+    async def aget_redirect_uri(self, token_request: TokenRequest) -> str:
+        """Retrieves the redirect uri
 
-    async def aget_redirect_uri(
-        self,
-        token_request: TokenRequest
-    ) -> str:
-        """ Retrieves the redirect uri
-        
         This function will retrieve the redirect uri from the RedirectWaiter.
         This function has to be implemented by the user.
-        
+
         """
-        
-
-
 
     def astart(
         self,
@@ -57,18 +50,16 @@ class Redirecter(Protocol):
         ...
 
 
-
-
 class AuthorizationCodeGrant(BaseOauth2Grant):
     """A grant that uses the authorization code flow
 
     This grant will create an AuthorizationCodeGrant, and use it to fetch a token.
-    
-    
-    
+
+
+
     """
 
-    redirecter: Redirecter 
+    redirecter: Redirecter
     """ A simple webserver that will listen for a redirect from the OSF and return the path """
 
     async def afetch_token(self, request: TokenRequest) -> Token:

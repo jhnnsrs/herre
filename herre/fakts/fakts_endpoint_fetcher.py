@@ -63,9 +63,10 @@ class FaktsUserFetcher(BaseModel):
                         raise UserFetchingError(
                             f"Could not fetch user from {user_info_url}"
                         ) from e
-                    
+
         raise UserFetchingError("Could not fetch user")
 
     class Config:
         """pydantic config"""
+
         arbitrary_types_allowed = True

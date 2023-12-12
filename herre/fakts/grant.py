@@ -1,14 +1,16 @@
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, SecretStr
 from herre.grants.base import BaseGrant
-from herre.fakts.registry import GrantType,  GrantRegistry, get_default_grant_registry
+from herre.fakts.registry import GrantType, GrantRegistry, get_default_grant_registry
 from herre.grants.oauth2.base import BaseOauth2Grant
 from oauthlib.oauth2.rfc6749.errors import InvalidClientError
 from fakts import Fakts
 from herre.models import Token, TokenRequest
 
+
 class HerreFakt(BaseModel):
-    """ A fakt for the herre grant"""
+    """A fakt for the herre grant"""
+
     base_url: str
     name: str
     client_id: SecretStr
@@ -23,11 +25,9 @@ class HerreFakt(BaseModel):
     no_temp: bool = False
 
 
-
-
 class FaktsGrant(BaseOauth2Grant):
     """A grant that uses fakts to configure itself
-    
+
     Parameters
     ----------
     fakts : Fakts
@@ -38,14 +38,13 @@ class FaktsGrant(BaseOauth2Grant):
         The grant registry to use, by default get_default_grant_registry()
     fakts_group : str
         The fakts group to use for the grant
-    
-    
-    """
 
+
+    """
 
     fakts: Fakts
     """Fakts instance to use"""
-    base_url: Optional[str] = None #type: ignore
+    base_url: Optional[str] = None  # type: ignore
     """The base url to use for the grant (overwrites the one from the fakt)"""
     grant_registry: GrantRegistry = Field(default_factory=get_default_grant_registry)
     """The grant registry to use"""
@@ -60,7 +59,7 @@ class FaktsGrant(BaseOauth2Grant):
 
     def configure(self, fakt: HerreFakt) -> None:
         """Configures the grant
-        
+
         Sets the active grant to the grant specified in the fakt.
 
         Parameters
@@ -72,12 +71,10 @@ class FaktsGrant(BaseOauth2Grant):
         ------
         ValueError
             If the grant_type is not supported
-        
-        
+
+
         """
-        grant_class =  self.grant_registry.get_grant_for_type(
-            fakt.grant_type
-        )
+        grant_class = self.grant_registry.get_grant_for_type(fakt.grant_type)
 
         self._activegrant = grant_class(**fakt.dict())
 

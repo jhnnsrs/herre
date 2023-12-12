@@ -4,13 +4,11 @@ from typing import Optional
 from herre.grants.stored_login import StoredUser
 
 
-
-
 class QtSettingsUserStore(BaseModel):
-    """ A user store that uses Qt settings to store the use"""
+    """A user store that uses Qt settings to store the use"""
+
     settings: QtCore.QSettings
     default_user_key: str = "default_user"
-
 
     async def aput_default_user(self, user: Optional[StoredUser]) -> None:
         """Puts the default user

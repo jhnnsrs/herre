@@ -60,8 +60,6 @@ class CacheGrant(BaseGrant):
             The token
         """
 
-
-
         cache = None
 
         if os.path.exists(self.cache_file):

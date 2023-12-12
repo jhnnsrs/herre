@@ -12,16 +12,14 @@ from qtpy import QtCore
 logger = logging.getLogger(__name__)
 
 
-
-
-
 class OrderDefaults(BaseModel):
     """A model for the default user storage
-    
+
     It is used to store the default user for the fakts
     key.
-    
+
     """
+
     default_user: Dict[str, StoredUser] = {}
 
 
@@ -41,14 +39,14 @@ class FaktsQtStore(BaseModel):
         the fakts. This is done to ensure that the user is only stored
         for the correct fakts. (E.g. when the corresponding endpoint
         server changes)
-        
+
 
         Parameters
         ----------
         user : StoredUser | None
             A stored user, with the token and the user, if None is provided
             the user is deleted
-        
+
         """
 
         print(user)
@@ -100,4 +98,5 @@ class FaktsQtStore(BaseModel):
 
     class Config:
         """pydantic config"""
+
         arbitrary_types_allowed = True

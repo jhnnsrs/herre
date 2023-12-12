@@ -8,8 +8,7 @@ from herre.grants.auto_login import (
 
 
 class ShouldWeSaveThisAsDefault(QtWidgets.QDialog):
-    """A dialog that asks the user if they want to save the user as the default user.
-    """
+    """A dialog that asks the user if they want to save the user as the default user."""
 
     def __init__(self, stored: StoredUser, *args, **kwargs) -> None:
         """Creates a new ShouldWeSaveThisAsDefault dialog"""
@@ -42,7 +41,7 @@ class ShouldWeSaveThisAsDefault(QtWidgets.QDialog):
     def _on_yes(self) -> None:
         self.accept()
 
-    def _on_no(self)  -> None:
+    def _on_no(self) -> None:
         self.reject()
 
 
@@ -53,9 +52,9 @@ class AutoLoginWidget(QtWidgets.QWidget):
     and ask the user if they want to save the user.
 
     """
+
     def __init__(self, *args, **kwargs) -> None:
-        """Creates a new AutoLoginWidget
-        """
+        """Creates a new AutoLoginWidget"""
         super().__init__(*args, **kwargs)
 
         self.ashould_we = qt_to_async(self._should_we, autoresolve=True)

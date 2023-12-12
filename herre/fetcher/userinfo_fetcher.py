@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class UserinfoUserFetcher(BaseModel):
     """A user fetcher that fetches the user from an userinfo endpoint.
-    
+
     This fetcher uses the userinfo endpoint to fetch the user. It uses the access token to
     authenticate itself to the userinfo endpoint.
 
@@ -21,8 +21,6 @@ class UserinfoUserFetcher(BaseModel):
 
 
     """
-
-
 
     userModel: Type[BaseModel] = Field(
         description="The model to use for the user",

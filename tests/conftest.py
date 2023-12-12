@@ -10,19 +10,14 @@ import pytest
 from aioresponses import aioresponses
 
 
-
-
-
 @pytest.fixture
 def cc_token_response():
     with aioresponses() as m:
-
         m.post(
             "http://localhost:8000/o/token/",
             status=200,
-            payload={'access_token': 'mock_access_token', 'token_type': 'Bearer'},
+            payload={"access_token": "mock_access_token", "token_type": "Bearer"},
         )
-
 
         yield m
 
@@ -30,13 +25,11 @@ def cc_token_response():
 @pytest.fixture
 def failing_token_response():
     with aioresponses() as m:
-
         m.post(
             "http://localhost:8000/o/token/",
             status=400,
-            payload={'status': 'Failed'},
+            payload={"status": "Failed"},
         )
-
 
         yield m
 
@@ -44,12 +37,10 @@ def failing_token_response():
 @pytest.fixture
 def valid_token_response():
     with aioresponses() as m:
-
         m.post(
             "http://localhost:8000/o/token/",
             status=200,
-            payload={'access_token': 'mock_access_token', 'token_type': 'Bearer'},
+            payload={"access_token": "mock_access_token", "token_type": "Bearer"},
         )
-
 
         yield m

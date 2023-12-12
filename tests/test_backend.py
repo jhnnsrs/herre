@@ -3,9 +3,9 @@ from herre.grants.oauth2.client_credentials import ClientCredentialsGrant
 from .utils import fake_token_generator
 import pytest
 
+
 @pytest.mark.asyncio
 async def test_backend_mock_sync(valid_token_response):
-
     x = Herre(
         grant=ClientCredentialsGrant(
             base_url="http://localhost:8000/o",
@@ -21,7 +21,6 @@ async def test_backend_mock_sync(valid_token_response):
 
 @pytest.mark.asyncio
 async def test_backend_mock_sync(failing_token_response):
-
     x = Herre(
         grant=ClientCredentialsGrant(
             base_url="http://localhost:8000/o",

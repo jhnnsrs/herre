@@ -11,7 +11,9 @@ from koil.helpers import unkoil
 from herre.fetcher.models import UserFetcher
 from pydantic import BaseModel
 
-current_herre: contextvars.ContextVar[Optional["Herre"]] = contextvars.ContextVar("current_herre", default=None)
+current_herre: contextvars.ContextVar[Optional["Herre"]] = contextvars.ContextVar(
+    "current_herre", default=None
+)
 
 logger = logging.getLogger(__name__)
 
@@ -206,9 +208,9 @@ class Herre(KoiledModel):
 
     class Config:
         """Pydantic config"""
+
         underscore_attrs_are_private = True
         extra = "forbid"
-
 
 
 def get_current_herre() -> Herre:

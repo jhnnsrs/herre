@@ -65,9 +65,11 @@ failure_return = """
 """
 
 
-def wrapped_qs_future(future: asyncio.Future, success_html: str , failure_html: str) -> Callable[[web.Request],Awaitable[web.Response]]:
+def wrapped_qs_future(
+    future: asyncio.Future, success_html: str, failure_html: str
+) -> Callable[[web.Request], Awaitable[web.Response]]:
     """Wraps a future in a webserver
-    
+
     This is used to wrap a future in a webserver, so that the future can be resolved
     when the webserver is called. It is similar to an async partial function.
 
@@ -79,7 +81,7 @@ def wrapped_qs_future(future: asyncio.Future, success_html: str , failure_html: 
         The html to return when the future is resolved
     failure_html : str
         The html to return when the future is rejected
-    
+
     """
 
     async def web_token_response(request: web.Request) -> web.Response:
@@ -108,16 +110,12 @@ class AioHttpServerRedirecter(BaseModel):
     success_html: str = success_full_return
     failure_html: str = failure_return
 
+    async def aget_redirect_uri(self, token_request: TokenRequest) -> str:
+        """Retrieves the redirect uri
 
-    async def aget_redirect_uri(
-        self,
-        token_request: TokenRequest
-    ) -> str:
-        """ Retrieves the redirect uri
-        
         This function will retrieve the redirect uri from the RedirectWaiter.
         This function has to be implemented by the user.
-        
+
         """
 
         return f"{self.redirect_protocol}://{self.redirect_host}:{self.redirect_port}{self.redirect_path}"
@@ -139,7 +137,9 @@ class AioHttpServerRedirecter(BaseModel):
         app.router.add_get(
             "/",
             wrapped_qs_future(
-                token_future, success_html=success_full_return, failure_html=failure_return
+                token_future,
+                success_html=success_full_return,
+                failure_html=failure_return,
             ),
         )
 
@@ -165,7 +165,9 @@ class AioHttpServerRedirecter(BaseModel):
             if tf == token_future:
                 redirect_qs = tf.result()
             else:
-                raise Oauth2RedirectError(f"Webserver ended unexpectedly {str(tf.exception())}")
+                raise Oauth2RedirectError(
+                    f"Webserver ended unexpectedly {str(tf.exception())}"
+                )
 
         for task in pending:
             task.cancel()
@@ -179,10 +181,3 @@ class AioHttpServerRedirecter(BaseModel):
             raise Oauth2RedirectError("Webserver")
 
         return redirect_qs
-
-    
-        
-
-
-
-
