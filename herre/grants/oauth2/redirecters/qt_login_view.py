@@ -34,6 +34,7 @@ class WebViewRedirecter(QWebEngineView):
         super().__init__(*args, **kwargs)
         self.name = self.page()
         self.redirect_uri = redirect_uri
+        self.future = None
         self.show_coro = qt_to_async(self.initialize)
 
     def initialize(self, future: QtFuture, auth_url: str) -> None:
@@ -52,12 +53,12 @@ class WebViewRedirecter(QWebEngineView):
             The redirect_uri to intercept
         """
         self.future = future
-        self.future = future
 
         self.load(QtCore.QUrl(auth_url))
         self.show()
+        self.urlChanged.connect(self.on_urlChanged)
 
-    def _interceptUrl(self, url: QtCore.QUrl) -> None:
+    def on_urlChanged(self, url: QtCore.QUrl) -> None:
         """Intercepts a url
 
         This function will intercept a url, and resolve the future when the url
@@ -70,7 +71,7 @@ class WebViewRedirecter(QWebEngineView):
                     self.future.resolve(url_string)
                     self.close()
                 else:
-                    print("No future to resolve")
+                    pass
 
     async def astart(self, auth_url: str) -> str:
         """Starts the LoginWrapper
@@ -89,7 +90,6 @@ class WebViewRedirecter(QWebEngineView):
         str
             The redirect_uri with the code
         """
-
         return await self.show_coro(auth_url)
 
     async def aget_redirect_uri(self, token_request: TokenRequest) -> str:

@@ -1,5 +1,5 @@
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, SecretStr
 from herre.grants.base import BaseGrant
 from herre.fakts.registry import GrantType, GrantRegistry
 from herre.grants.oauth2.base import BaseOauth2Grant

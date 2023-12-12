@@ -1,6 +1,6 @@
 import pytest
 from herre import Herre
-from koil.qt import QtRunner
+from koil.qt import async_to_qt, QtRunner
 from koil.composition.qt import QtPedanticKoil
 from PyQt5 import QtWidgets, QtCore
 from herre.grants.oauth2.authorization_code import AuthorizationCodeGrant

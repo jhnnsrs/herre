@@ -1,4 +1,4 @@
-from typing import Dict, Type, Optional, Callable
+from typing import Dict, Callable
 
 from pydantic import BaseModel, Field
 from herre.grants.base import BaseGrant

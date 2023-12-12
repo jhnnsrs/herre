@@ -42,8 +42,6 @@ class ClientCredentialsGrant(BaseOauth2Grant):
             client_id=self.client_id.get_secret_value(),
         )
 
-        print(body)
-
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
