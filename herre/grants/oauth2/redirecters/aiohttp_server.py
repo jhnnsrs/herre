@@ -6,7 +6,8 @@ from herre.grants.oauth2.errors import Oauth2RedirectError
 from typing import Callable, Awaitable
 from pydantic import BaseModel
 from herre.models import TokenRequest
-
+from typing import Optional, List
+from pydantic import validator, Field
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +66,45 @@ failure_return = """
 """
 
 
+async def find_free_port(
+    host: str = "",
+    selectable_ports: Optional[List[int]] = None,
+    selectable_start=6000,
+    selectable_end=7000,
+) -> int:
+    """Finds a free port
+
+    This function will find a free port on the host machine.
+
+    Parameters
+    ----------
+    host : str
+        The host to check
+    selectable_ports : Optional[List[int]]
+        A list of ports to check
+
+    Returns
+    -------
+    int
+        The free port
+
+    """
+
+    if not selectable_ports:
+        selectable_ports = list(range(selectable_start, selectable_end))
+
+    for port in selectable_ports:
+        try:
+            server = await asyncio.start_server(lambda x, y: None, host=host, port=port)
+            server.close()
+            await server.wait_closed()
+            return port
+        except OSError:
+            continue
+
+    raise OSError("No free ports found")
+
+
 def wrapped_qs_future(
     future: asyncio.Future, success_html: str, failure_html: str
 ) -> Callable[[web.Request], Awaitable[web.Response]]:
@@ -99,16 +139,124 @@ def wrapped_qs_future(
     return web_token_response
 
 
+def is_valid_port(port: int) -> bool:
+    """Checks if a port is valid
+
+    This function will check if a port is valid.
+
+    Parameters
+    ----------
+    port : int
+        The port to check
+
+    Returns
+    -------
+    bool
+        True if the port is valid, False otherwise
+
+    """
+
+    if not isinstance(port, int):
+        return False
+
+    if port < 0 or port > 65535:
+        return False
+
+    return True
+
+
+class PortFinder(BaseModel):
+    """A simple port finder"""
+
+    fixed_port: Optional[int] = None
+    selectable_ports: Optional[List[int]] = None
+    selectable_start: int = 5000
+    selectable_end: int = 6000
+
+    @validator("selectable_ports")
+    def check_ports(cls, v):
+        if isinstance(v, list):
+            for i in v:
+                if not is_valid_port(i):
+                    raise ValueError(f"Port {i} is not valid")
+
+            return v
+
+        if isinstance(v, int):
+            if is_valid_port(v):
+                return [v]
+            else:
+                raise ValueError(f"Port {v} is not valid")
+
+        return []
+
+    @validator("fixed_port", "selectable_start", "selectable_end")
+    def check_fixed_port(cls, v):
+        if v is not None:
+            if is_valid_port(v):
+                return v
+            else:
+                raise ValueError(f"Port {v} is not valid")
+
+        return None
+
+    async def afind_port(self, host: str = "") -> int:
+        """Finds a free port
+
+        This function will find a free port on the host machine.
+
+        Parameters
+        ----------
+        host : str
+            The host to check
+
+        Returns
+        -------
+        int
+            The free port
+
+        """
+        if self.fixed_port:
+            return self.fixed_port
+
+        return await find_free_port(
+            host=host,
+            selectable_ports=self.selectable_ports,
+            selectable_start=self.selectable_start,
+            selectable_end=self.selectable_end,
+        )
+
+
 class AioHttpServerRedirecter(BaseModel):
     """A simple webserver that will listen for a redirect from the OSF and return the path"""
 
-    redirect_port: int = 6767
+    redirect_port: PortFinder = Field(
+        default_factory=lambda: PortFinder(), description="The port to listen on"
+    )
     redirect_timeout: int = 40
     redirect_host: str = "127.0.0.1"
     redirect_protocol: str = "http"
     redirect_path: str = "/"
     success_html: str = success_full_return
     failure_html: str = failure_return
+
+    _chosen_port: Optional[int] = None
+
+    @validator("redirect_port")
+    def check_port(cls, v):
+        if isinstance(v, str):
+            v = int(v)
+
+        if isinstance(v, int):
+            return PortFinder(fixed_port=v)
+
+        if isinstance(v, list):
+            return PortFinder(selectable_ports=v)
+
+        if isinstance(v, PortFinder):
+            return v
+
+        raise ValueError(f"Port {v} is not valid")
 
     async def aget_redirect_uri(self, token_request: TokenRequest) -> str:
         """Retrieves the redirect uri
@@ -118,7 +266,9 @@ class AioHttpServerRedirecter(BaseModel):
 
         """
 
-        return f"{self.redirect_protocol}://{self.redirect_host}:{self.redirect_port}{self.redirect_path}"
+        self._chosen_port = await self.redirect_port.afind_port()
+
+        return f"{self.redirect_protocol}://{self.redirect_host}:{self._chosen_port}{self.redirect_path}"
 
     async def astart(
         self,
@@ -143,11 +293,15 @@ class AioHttpServerRedirecter(BaseModel):
             ),
         )
 
+        port = self._chosen_port
+        if not port:
+            raise ValueError("Port not chosen")
+
         webserver_future = asyncio.wait_for(
             web._run_app(
                 app,
                 host=self.redirect_host,
-                port=self.redirect_port,
+                port=port,
                 print=lambda x: logger.info(x),
                 handle_signals=False,
             ),
@@ -181,3 +335,7 @@ class AioHttpServerRedirecter(BaseModel):
             raise Oauth2RedirectError("Webserver")
 
         return redirect_qs
+
+    class Config:
+        arbitrary_types_allowed = True
+        underscore_attrs_are_private = True

@@ -67,4 +67,6 @@ class UserinfoUserFetcher(BaseModel):
                         raise UserFetchingError("Malformed Answer") from e
 
                 else:
-                    raise UserFetchingError("Error! Coud not retrieve on the endpoint")
+                    raise UserFetchingError(
+                        "Error! Coud not retrieve on the endpoint. Maybe your token is invalid? Or you forgot to add the `openid` scope?"
+                    )

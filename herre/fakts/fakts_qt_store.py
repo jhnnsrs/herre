@@ -48,8 +48,6 @@ class FaktsQtStore(BaseModel):
             the user is deleted
 
         """
-
-        print(user)
         key = await self.fakts.aget(self.fakts_key)
         un_storage = self.settings.value(self.default_user_key, None)
         if not un_storage:
@@ -58,7 +56,7 @@ class FaktsQtStore(BaseModel):
             try:
                 storage = OrderDefaults(**json.loads(un_storage))
             except Exception as e:
-                print(e)
+                logger.debug(e, exc_info=True)
                 storage = OrderDefaults()
 
         if user is None:
@@ -66,8 +64,6 @@ class FaktsQtStore(BaseModel):
                 del storage.default_user[key]
         else:
             storage.default_user[key] = user
-
-        print(storage)
 
         self.settings.setValue(self.default_user_key, storage.json())
 

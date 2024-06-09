@@ -45,7 +45,7 @@ class FaktsUserFetcher(BaseModel):
         ) as session:
             user_info_url = await self.fakts.aget(self.fakts_key)
             async with session.get(
-                user_info_url,
+                user_info_url + "/",
             ) as resp:
                 if resp.status == 200:
                     try:
@@ -61,7 +61,7 @@ class FaktsUserFetcher(BaseModel):
                     except Exception as e:
                         logger.error(f"Could not fetch user: {e}", exc_info=True)
                         raise UserFetchingError(
-                            f"Could not fetch user from {user_info_url}"
+                            f"Could not fetch user from {user_info_url}. Maybe your token is invalid? Or you forgot to add the `openid` scope?"
                         ) from e
 
         raise UserFetchingError("Could not fetch user")
