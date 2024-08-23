@@ -5,7 +5,6 @@ class to acquire Tokens.
 
 """
 
-
 from .meta import CacheGrant
 from .base import BaseGrant
 from .static import StaticGrant

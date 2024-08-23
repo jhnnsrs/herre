@@ -51,9 +51,9 @@ class ClientCredentialsGrant(BaseOauth2Grant):
 
         # Create an OAuth2 session for the OSF
         async with aiohttp.ClientSession(
-            connector=aiohttp.TCPConnector(ssl=self.ssl_context)
-            if self.ssl_context
-            else None,
+            connector=(
+                aiohttp.TCPConnector(ssl=self.ssl_context) if self.ssl_context else None
+            ),
             headers=headers,
         ) as session:
             async with session.post(
