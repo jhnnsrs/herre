@@ -18,9 +18,9 @@ class HerreFakt(BaseModel):
     grant_type: GrantType
     grant_kwargs: Dict[str, Any] = {}
     scopes: List[str]
-    redirect_uri: Optional[str]
-    username: Optional[str]
-    password: Optional[str]
+    redirect_uri: Optional[str] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
     timeout: int = 500
     no_temp: bool = False
 

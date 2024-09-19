@@ -40,8 +40,8 @@ class Token(BaseModel):
     access_token: str
     scope: Optional[List[str]] = Field(default_factory=list)
     refresh_token: Optional[str] = None
-    expires_in: Optional[int] = None
-    expires_at: Optional[int] = None
+    expires_in: Optional[float] = None
+    expires_at: Optional[float] = None
     token_type: Optional[str] = None
 
     def is_expired(self) -> bool:

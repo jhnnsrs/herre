@@ -1,7 +1,7 @@
 from herre.fetcher.errors import UserFetchingError
 from herre.grants.base import BaseGrant
 from typing import Optional, runtime_checkable, Protocol
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from herre.models import Token, TokenRequest
 from herre.grants.base import BaseGrantProtocol
 import logging
@@ -83,6 +83,7 @@ class AutoLoginGrant(BaseGrant):
 
 
     """
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     store: UserStore
     """this is the login widget (protocol)"""
@@ -159,9 +160,3 @@ class AutoLoginGrant(BaseGrant):
         except Exception as e:
             logger.error(e, exc_info=True)
             raise e
-
-    class Config:
-        """Pydantic config"""
-
-        underscore_attrs_are_private = True
-        arbitrary_types_allowed = True

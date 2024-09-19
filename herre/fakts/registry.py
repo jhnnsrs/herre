@@ -1,6 +1,6 @@
 from typing import Dict, Callable
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from herre.grants.base import BaseGrant
 import logging
 from enum import Enum
@@ -29,6 +29,7 @@ class GrantRegistry(BaseModel):
 
 
     """
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     registered_grants: Dict[GrantType, GrantBuilder] = Field(default_factory=dict)
 
@@ -62,9 +63,3 @@ class GrantRegistry(BaseModel):
 
         """
         return self.registered_grants[grant_type]
-
-    class Config:
-        """Pydantic config"""
-
-        json_encoders = {type: lambda x: x.__name__}
-        underscore_attrs_are_private = True

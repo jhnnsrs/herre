@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from herre.models import Token, TokenRequest
 from typing import Protocol, runtime_checkable
 import logging
@@ -45,6 +45,7 @@ class BaseGrant(BaseModel):
     a grant.
 
     """
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
 
     @abstractmethod
     async def afetch_token(self, request: TokenRequest) -> Token:
@@ -64,10 +65,3 @@ class BaseGrant(BaseModel):
             The token
         """
         raise NotImplementedError("Implement afetch_token")
-
-    class Config:
-        """Config for the base grant"""
-
-        underscore_attrs_are_private = True
-        arbitrary_types_allowed = True
-        extras = "forbid"

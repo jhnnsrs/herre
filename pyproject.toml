@@ -12,8 +12,8 @@ python = "^3.8"
 aiohttp = ">3.7.4"
 certifi = ">2021"
 oauthlib = "^3.1.1"
-pydantic = ">=1.9.0, <2"
-koil = ">=0.3.5"
+pydantic = ">2"
+koil = ">=1.0.0"
 QtPy = { version = "^2.0.1", optional = true }
 
 [tool.poetry.extras]

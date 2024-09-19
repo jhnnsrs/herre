@@ -74,11 +74,11 @@ class Herre(KoiledModel):
     max_retries: int = 1
     allow_insecure: bool = False
     scope_delimiter: str = " "
-    auto_login = True
+    auto_login: bool = True
 
     login_on_enter: bool = False
     logout_on_exit: bool = False
-    entered = False
+    entered: bool = False
 
     no_temp: bool = False
 
@@ -206,11 +206,6 @@ class Herre(KoiledModel):
         """Jupyter inline representation"""
         return f"<table><tr><td>auto_login</td><td>{self.auto_login}</td></tr></table>"
 
-    class Config:
-        """Pydantic config"""
-
-        underscore_attrs_are_private = True
-        extra = "forbid"
 
 
 def get_current_herre() -> Herre:

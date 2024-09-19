@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 import ssl
 import certifi
 import aiohttp
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class FaktsUserFetcher(BaseModel):
     """The endpoint to fetch the user from"""
-
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     userModel: Type[BaseModel] = Field(
         description="The model to use for the user",
     )
@@ -66,7 +66,3 @@ class FaktsUserFetcher(BaseModel):
 
         raise UserFetchingError("Could not fetch user")
 
-    class Config:
-        """pydantic config"""
-
-        arbitrary_types_allowed = True

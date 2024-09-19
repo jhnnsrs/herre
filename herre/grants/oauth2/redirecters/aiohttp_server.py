@@ -7,7 +7,7 @@ from typing import Callable, Awaitable
 from pydantic import BaseModel
 from herre.models import TokenRequest
 from typing import Optional, List
-from pydantic import validator, Field
+from pydantic import field_validator, Field
 
 logger = logging.getLogger(__name__)
 
@@ -173,7 +173,7 @@ class PortFinder(BaseModel):
     selectable_start: int = 5000
     selectable_end: int = 6000
 
-    @validator("selectable_ports")
+    @field_validator("selectable_ports")
     def check_ports(cls, v):
         if isinstance(v, list):
             for i in v:
@@ -190,7 +190,7 @@ class PortFinder(BaseModel):
 
         return []
 
-    @validator("fixed_port", "selectable_start", "selectable_end")
+    @field_validator("fixed_port", "selectable_start", "selectable_end")
     def check_fixed_port(cls, v):
         if v is not None:
             if is_valid_port(v):
@@ -242,7 +242,7 @@ class AioHttpServerRedirecter(BaseModel):
 
     _chosen_port: Optional[int] = None
 
-    @validator("redirect_port")
+    @field_validator("redirect_port")
     def check_port(cls, v):
         if isinstance(v, str):
             v = int(v)
@@ -335,7 +335,3 @@ class AioHttpServerRedirecter(BaseModel):
             raise Oauth2RedirectError("Webserver")
 
         return redirect_qs
-
-    class Config:
-        arbitrary_types_allowed = True
-        underscore_attrs_are_private = True
