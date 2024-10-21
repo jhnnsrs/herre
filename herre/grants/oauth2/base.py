@@ -8,6 +8,7 @@ from ssl import SSLContext
 
 class BaseOauth2Grant(BaseGrant):
     """A base class for oauth2 grants."""
+
     model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
     base_url: str
     """The base url to use for the grant"""

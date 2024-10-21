@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 class FaktsUserFetcher(BaseModel):
     """The endpoint to fetch the user from"""
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
     userModel: Type[BaseModel] = Field(
         description="The model to use for the user",
@@ -65,4 +66,3 @@ class FaktsUserFetcher(BaseModel):
                         ) from e
 
         raise UserFetchingError("Could not fetch user")
-

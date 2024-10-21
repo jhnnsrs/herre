@@ -29,6 +29,7 @@ class GrantRegistry(BaseModel):
 
 
     """
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     registered_grants: Dict[GrantType, GrantBuilder] = Field(default_factory=dict)

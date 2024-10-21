@@ -83,6 +83,7 @@ class AutoLoginGrant(BaseGrant):
 
 
     """
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     store: UserStore

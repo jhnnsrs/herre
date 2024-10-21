@@ -207,7 +207,6 @@ class Herre(KoiledModel):
         return f"<table><tr><td>auto_login</td><td>{self.auto_login}</td></tr></table>"
 
 
-
 def get_current_herre() -> Herre:
     """Get the current herre instance"""
     herre = current_herre.get()
