@@ -1,5 +1,8 @@
 # herre
 
+> [!WARNING]
+> **This repository is deprecated and no longer maintained.** Its functionality now lives in [fakts](https://github.com/jhnnsrs/fakts). This repository has been archived and is kept read-only for reference.
+
 [![codecov](https://codecov.io/gh/jhnnsrs/herre/branch/master/graph/badge.svg?token=UGXEA2THBV)](https://codecov.io/gh/jhnnsrs/herre)
 [![PyPI version](https://badge.fury.io/py/herre.svg)](https://pypi.org/project/herre/)
 ![Maintainer](https://img.shields.io/badge/maintainer-jhnnsrs-blue)
